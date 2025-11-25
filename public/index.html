@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="/static/bootstrap.min.css" rel="stylesheet">
+  <script src="/static/jquery.min.js"></script>
+  <title>English</title>
+  <style>
+    .table.small {width: auto}
+    .table.small>:not(caption)>*>* {padding: .1rem .1rem;}
+    .table.small .btn-sm {
+      padding: .02rem .25rem;
+      width: 20px;
+    }
+    .table.small span.word + span {display:none; font-size:10px;}
+    .table.small span.word:hover + span {display:inline}
+    .counter {
+      position: fixed;
+      right: 0;
+      padding: 0 5px;
+      border: 1px solid #eee;
+      font-size:12px;
+    }
+    tr[data-rate-max="4"] .word {font-size:12px;}
+    .text-ok {color:#ccc!important}
+    #wordEdit label {font-size: 12px; margin-bottom: 0;}
+  </style>
+</head>
+<body>
+
+
+<nav class="navbar fixed-top navbar-expand-sm navbar-light bg-light">
+  <div class="container">
+    <a class="navbar-brand" href="?page=">English</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="?page=exercise">Упражнения</a></li>
+        <li class="nav-item"><a class="nav-link" href="?page=exercise&articles=1">articles</a></li>
+        <li class="nav-item"><a class="nav-link" href="?page=exercise&articles=2">предлоги</a></li>
+
+
+        <!--
+        <li class="nav-item"><a class="nav-link" href="/english/?import=1">Импорт</a></li>
+        <li class="nav-item"><a class="nav-link" href="/english/">Чтение</a></li>
+        -->
+        <li class="nav-item"><a class="nav-link" href="?page=memory">Слова</a></li>
+        <li class="nav-item"><a class="nav-link" href="?page=category">Категории</a></li>
+        <li class="nav-item"><a class="nav-link" href="http://msc/index.php?table=english_bookread&db=tester&s=tbl_data" target="_blank">book</a></li>
+        <li class="nav-item"><a class="nav-link" href="http://msc/index.php?s=tbl_data&table=english_words&db=tester" target="_blank">words</a></li>
+      </ul>
+
+      <form class="d-flex justify-content-end" id="readbook" method="post">
+        <span style="margin-right:10px; font-size:11px;" id="readinfo"></span>
+         {{ .getBooksSelector }}
+
+        <!--
+        selected = $_GET['book'] ?: $_POST['book'] ?: $_COOKIE['book']
+
+        <input type="text" required class="form-control form-control-sm me-2 w-50" name="readbook" value="" placeholder="Книга" >
+        -->
+        <input type="number" class="form-control form-control-sm me-2 w-25" required name="readpage" value="" placeholder="page" >
+        <input class="form-check-input" type="checkbox" class="me-2" name="fill-pages" value="1">
+        <input type="submit" class="btn btn-outline-success btn-sm ms-2 me-2" value="add" />
+        <input type="button" class="btn btn-outline-warning btn-sm" value="next" onclick="$('[name=\'readpage\']').val(1 + parseInt($('[name=\'readpage\']').val())); $(this).prev().click(); $('[name=\'english\']').focus()" />
+      </form>
+    </div>
+
+  </div>
+</nav>
+
+<!--
+<div class="counter">
+    <a href="#" class="reset">сбросить</a> <a href="http://msc/index.php?table=english_log&db=tester&s=tbl_data">log</a><br />
+    <b class="rate fs-3">5</b> <span class="time" style="color:#aaa"></span> <span class="last-time"></span>
+</div>
+-->
+
+<div class="container" style="margin-top:70px;">
+$content;
+</div>
+
+
+<script src="/static/bootstrap.min.js"></script>
+<script type="text/javascript">
+
+  $('#readbook').submit(function(e) {
+    e.preventDefault()
+    $.post('', $(this).serialize(), function(data) {
+      $('[name="english"]').focus()
+      /*if (data != '') {
+          alert(data)
+      } else {*/
+      $('#readbook .btn').addClass('btn-success')
+      setTimeout(function() {
+        $('#readbook .btn').removeClass('btn-success')
+      }, 1000);
+      $('#readinfo').html(data)
+      //}
+    });
+  })
+  function loadNextBookPage()
+  {
+    let book = $('[name="id_book"]').val();
+    $.get('?action=get_page&book='+book, function(data) {
+      $('#readinfo').html('prev page ' + data)
+      $('[name="readpage"]').val(1 + parseInt(data))
+    });
+  }
+  $('[name="readbook"]').change(function() {
+    $('[name="book"]').val(this.value)
+    loadNextBookPage()
+  })
+
+  cook = {
+    //
+    set:function(name, value, expires, path, domain, secure) {
+      expl=new Date();
+      if (expires == undefined) {
+        expires = 30;
+      }
+      expires=expl.getTime() + (expires*60*60*1000);
+      expl.setTime(expires);
+      expires=expl.toGMTString();
+      var curCookie = name + "=" + escape(value) +
+              ((expires) ? "; expires=" + expires: "") +
+              ((path) ? "; path=" + path : "") +
+              ((domain) ? "; domain=" + domain : "") +
+              ((secure) ? "; secure" : "")
+      document.cookie = curCookie;
+      return cook.get(name) == value;
+    },
+    get:function(name) {
+      var prefix = name + "=";
+      var cookieStartIndex = document.cookie.indexOf(prefix);
+      if (cookieStartIndex == -1)
+        return false
+      var cookieEndIndex = document.cookie.indexOf(";", cookieStartIndex + prefix.length);
+      if (cookieEndIndex == -1)
+        cookieEndIndex = document.cookie.length;
+      return unescape(document.cookie.substring(cookieStartIndex + prefix.length, cookieEndIndex))
+    }
+  }
+
+  if (cook.get('page')) {
+    $('[name="readpage"]').val(cook.get('page'))
+  }
+
+</script>
+</body>
+</html>
