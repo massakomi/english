@@ -1,0 +1,92 @@
+{{define "home_scripts"}}
+<br /><br />
+scripts
+<script type="text/javascript">
+  $('.books-last').appendTo('.float-end')
+  function opentr(w)
+  {
+    if (w == 'context') {
+      var url = 'https://context.reverso.net/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4/%D0%B0%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9-%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9/'+$('[name=english]').val();
+    } else {
+      var url = 'https://translate.google.as/?sl=en&tl=ru&text='+$('[name=english]').val()
+    }
+    newWin = window.open(url, w);
+    return false;
+  }
+  function saveit(input, field='russian')
+  {
+    var id = $(input).closest('tr').data('id');
+    var russian = input.value;
+    $.get('?action=save_word&id='+id+'&'+field+'='+russian, function(data) {
+      $(input).replaceWith(data)
+      $('[name="english"]').focus()
+    });
+  }
+  $('table').on('blur', 'input', function(e) {
+    saveit(this, this.className)
+  })
+  $('table').on('keyup', 'input', function(e) {
+    if (e.keyCode == 13) {
+      saveit(this, this.className)
+    }
+  })
+  $('[name="english"]').on('blur', function() {
+    $('#get_word').html('...')
+    if (!this.value) {
+      return ;
+    }
+    $.get('?action=get_word&word='+this.value, function(data) {
+      $('#get_word').html(data)
+    });
+  })
+  /*$('td').on('click', function(e) {
+      if (e.target.tagName != 'TD') {
+          return ;
+      }
+  })*/
+  $('td').on('dblclick', function(e) {
+    if (e.target.tagName != 'TD') {
+      return ;
+    }
+    if ($(this).index() == 1 || $(this).index() == 2) {
+      let className = $(this).index() == 1 ? 'english' : 'russian';
+      if ($(this).index() == 1) {
+        var s = this.dataset.text;
+      } else {
+        var s = this.innerHTML;
+      }
+      s = s.replace(/"/g, '&quot;');
+      $(this).html('<input type="text" value="'+s+'" class="'+className+'" />')
+      $(this).find('input').focus()
+    }
+    if ($(this).index() == 3) {
+      let word = $(this).closest('tr').find('td:nth-child(2)').attr('title')
+      $.get('?word='+word, function(data) {
+        $('#info').html(data)
+      });
+    }
+    return false;
+  })
+
+
+  $('[name="english"], [name="russian"]').keydown(function(e) {
+    let eng = $('[name="english"]').val();
+    if (e.keyCode == 13 && eng && !$('[name="russian"]').val()) {
+      window.open('https://translate.google.as/?sl=en&tl=ru&text='+eng, 'context');
+    }
+  })
+</script>
+
+
+
+
+
+{{if .book}}
+<script type="text/javascript">
+  $(document).ready(function(){
+    loadNextBookPage()
+  });
+</script>
+{{end}}
+
+{{end}}

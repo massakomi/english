@@ -1,3 +1,4 @@
+{{define "base"}}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="/static/bootstrap.min.css" rel="stylesheet">
   <script src="/static/jquery.min.js"></script>
-  <title>English</title>
+  <title>{{template "title" .}} English</title>
   <style>
     .table.small {width: auto}
     .table.small>:not(caption)>*>* {padding: .1rem .1rem;}
@@ -60,9 +61,7 @@
          {{ .getBooksSelector }}
 
         <!--
-        selected = $_GET['book'] ?: $_POST['book'] ?: $_COOKIE['book']
-
-        <input type="text" required class="form-control form-control-sm me-2 w-50" name="readbook" value="" placeholder="Книга" >
+          <input type="text" required class="form-control form-control-sm me-2 w-50" name="readbook" value="" placeholder="Книга" >
         -->
         <input type="number" class="form-control form-control-sm me-2 w-25" required name="readpage" value="" placeholder="page" >
         <input class="form-check-input" type="checkbox" class="me-2" name="fill-pages" value="1">
@@ -82,7 +81,7 @@
 -->
 
 <div class="container" style="margin-top:70px;">
-$content;
+{{template "main" .}}
 </div>
 
 
@@ -154,3 +153,4 @@ $content;
 </script>
 </body>
 </html>
+{{end}}

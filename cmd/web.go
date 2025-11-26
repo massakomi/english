@@ -16,6 +16,7 @@ func Run() {
 	r.Static("/static", "./public/static")
 
 	r.GET("/", home)
+	r.GET("/update-auto", updateAuto)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("failed to run server: %v", err)
@@ -25,6 +26,8 @@ func Run() {
 func addTemplates(router *gin.Engine) {
 	files := []string{
 		"./public/index.html",
+		"./public/home.html",
+		"./public/home.scripts.html",
 	}
 	html := template.Must(template.ParseFiles(files...))
 	router.SetHTMLTemplate(html)
