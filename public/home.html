@@ -1,11 +1,18 @@
 {{template "base" .}}
 
-{{define "title"}}Домашняя страницы{{end}}
+{{define "title"}}Flow{{end}}
 
 {{define "main"}}
-home html
 
-    {{template "home_scripts" .}}
+    {{ if eq .word "" }}
+        {{template "home_top" .}}
+    {{ end }}
+
+    {{template "home_table" .}}
+
+    {{ if eq .word "" }}
+        {{template "home_scripts" .}}
+    {{ end }}
 
 
 {{end}}

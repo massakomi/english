@@ -1,0 +1,36 @@
+{{define "home_table"}}
+<style>
+    .table.small>:not(caption)>*>td {padding-right:10px;}
+    .table.small td:last-child {color:#ccc}
+    .table.small input {width: 100%; font-size: 12px;}
+    .top-form {position:absolute;}
+    .books-last {font-size:12px; position:absolute; right: 25px; top: 55px; color:#ccc}
+</style>
+<div style="max-height:600px; overflow:auto; width:auto">
+    <table class="table small table-striped table-hover">
+        {{ range .data }}
+        <tr data-id="{{ .id }}">
+            <td><a target="_blank" href="http://msc/index.php?table=english_words&db=tester&s=tbl_change&row=id%3D%22{{ .id }}%22">{{ .index }}</a></td>
+            <td title="{{ .english_short_auto }}" data-text="{{ .english }}">
+                {{if .englishBold }}
+                    <b>{{ .english }}</b> {{ .englishBold }}
+                {{else}}
+                    {{ .english }}
+                {{end}}
+            </td>
+
+            <td>{{ .russian }}</td>
+            <td>
+                {{if .page }}
+                    {{ .page }}
+                {{else}}
+                    <span style="font-size:10px; white-space:nowrap;">{{ .book }}</span>
+                {{end}}
+            </td>
+            <td>{{ .date_added }}</td>
+        </tr>
+        {{ end }}
+    </table>
+</div>
+<br />
+{{end}}

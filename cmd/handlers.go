@@ -4,6 +4,7 @@ import (
 	"english/pkg/db"
 	"english/pkg/models"
 	"english/pkg/text"
+	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gobs/pretty"
@@ -13,21 +14,20 @@ import (
 
 func home(c *gin.Context) {
 	database := db.Connect()
-	//fields := db.Fields(database, "english_book")
-	//fmt.Println(fields)
-
 	data := getDataForHome(c, database)
-	pretty.PrettyPrint(data)
-	baseStat := getBaseStat(data, database)
-	pretty.PrettyPrint(baseStat)
-
-	book := c.Query("book")
-
+	//pretty.PrettyPrint(data)
 	books := models.GetBooks(database)
+
+	dataBooks := getDataEnglishBooks(10, c, database)
+	pretty.PrettyPrint(dataBooks)
 
 	c.HTML(http.StatusOK, "home.html", gin.H{
 		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
-		"book":             book,
+		"book":             c.Query("book"),
+		"word":             c.Query("word"),
+		"cookieBook":       utils.GetCookie("book", c),
+		"countData":        len(data),
+		"data":             data,
 	})
 }
 

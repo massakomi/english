@@ -1,0 +1,45 @@
+{{define "home_top"}}
+<form method="post">
+  <input type="hidden" name="book" value="{{ .cookieBook }}">
+  <div class="row">
+    <div class="col-md-3">
+      <input type="text" required autofocus class="form-control" name="english" placeholder="English" >
+    </div>
+    <div class="col-md-6">
+      <input type="text" required class="form-control" name="russian" placeholder="Перевод" >
+    </div>
+    <!--
+    <div class="col-2">
+      <input type="text" class="form-control" name="comment" placeholder="Коммент" >
+    </div>
+    -->
+    <!--
+   <div class="col-md-1">
+     <input type="text" required class="form-control" name="book" value="<?=$_GET['book'] ?: $_POST['book'] ?: $_COOKIE['book']?>" placeholder="Книга" >
+   </div>
+
+   <div class="col-1">
+     <span style="position: absolute; margin-top: -16px; font-size: 11px;">list:</span>
+     <input type="text" required class="form-control" name="list" value="<?=$_POST['list'] ?: $_COOKIE['list']?>" placeholder="list" >
+   </div>
+   <div class="col-1">
+     <span style="position: absolute; margin-top: -16px; font-size: 11px;">page:</span>
+     <input type="text" class="form-control" name="page" value="<?=$_POST['page']?:$_POST['readpage']?:$_COOKIE['readpage']?>" placeholder="page" >
+   </div> -->
+    <div class="col-md-1">
+      <input type="submit" class="btn btn-primary" value="add" />
+    </div>
+  </div>
+</form>
+
+<a href="#" onclick="opentr('context'); return false;">context</a>
+<a href="#" onclick="opentr('contet'); return false;">google</a>
+{{ .countData }}
+&nbsp;
+<span id="get_word" style="color:green; font-size:12px;"></span>
+
+<hr />
+
+<div id="info"></div>
+<div class="float-end"></div>
+{{end}}

@@ -28,6 +28,8 @@ func addTemplates(router *gin.Engine) {
 		"./public/index.html",
 		"./public/home.html",
 		"./public/home.scripts.html",
+		"./public/home_top.html",
+		"./public/home_table.html",
 	}
 	html := template.Must(template.ParseFiles(files...))
 	router.SetHTMLTemplate(html)
