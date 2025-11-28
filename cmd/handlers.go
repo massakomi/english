@@ -7,9 +7,12 @@ import (
 	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gobs/pretty"
+	"strconv"
+
+	//"github.com/gobs/pretty"
 	"html/template"
 	"net/http"
+	"time"
 )
 
 func home(c *gin.Context) {
@@ -18,8 +21,12 @@ func home(c *gin.Context) {
 	//pretty.PrettyPrint(data)
 	books := models.GetBooks(database)
 
-	dataBooks := getDataEnglishBooks(10, c, database)
-	pretty.PrettyPrint(dataBooks)
+	maxDays, _ := strconv.Atoi(c.DefaultQuery("max", "10"))
+	dataEnglishBooks := GetDataEnglishBooks(maxDays, c, database)
+	// pretty.PrettyPrint(dataEnglishBooks)
+
+	html := ReadingStat("Сегодня", dataEnglishBooks, time.Now())
+	html += ReadingStat("Вчера", dataEnglishBooks, time.Now().Add(-time.Hour*24))
 
 	c.HTML(http.StatusOK, "home.html", gin.H{
 		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
@@ -28,6 +35,7 @@ func home(c *gin.Context) {
 		"cookieBook":       utils.GetCookie("book", c),
 		"countData":        len(data),
 		"data":             data,
+		"readingStat":      template.HTML(html),
 	})
 }
 

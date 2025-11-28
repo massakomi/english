@@ -3,10 +3,15 @@ package cmd
 import (
 	_ "database/sql"
 	"english/pkg/db"
+	"english/pkg/models"
 	"english/pkg/text"
 	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
+	"maps"
+	"math"
+	"slices"
 	"strconv"
 
 	//"github.com/gobs/pretty"
@@ -133,57 +138,92 @@ func buildWhereForHomeData(c *gin.Context) string {
 }
 
 // Статистика чтения книг
-func getDataEnglishBooks(max int, c *gin.Context, database *sqlx.DB) []EnglishExercise {
-	add := ""
-	if c.Query("noexercises") == "" {
-		add = fmt.Sprintf(`UNION (
-			select id, 'упражнения' as name, 0 AS id_book, page, date_added, date_finished 
-			from english_exercise 
-			where date_added > date_add(NOW(), -'%v day'::interval))`, max)
-	}
-	sql := fmt.Sprintf(`select * from english_bookread %v order by date_added desc limit 3`, add)
-	//fmt.Println(sql)
-	dataEnglishAll := getDataEnglish(sql, database)
-
+func GetDataEnglishBooks(max int, c *gin.Context, database *sqlx.DB) []models.EnglishBookread {
+	dataEnglishAll := models.GetEnglishBookRead(database, c.Query("noexercises") == "", max)
 	for _, item := range dataEnglishAll {
-		if item.dateFinished == item.dateAdded {
+		if item.DateFinished == item.DateAdded {
 			// echo notice := fmt.Sprintf(`Есть открытые страницы (%v, %v)`, item.name, item.page)
-			item.current = true
-			item.dateFinished = time.Now()
+			item.Current = true
+			item.DateFinished = time.Now()
 		}
-		item.offset = item.dateFinished.Sub(item.dateAdded)
+		item.Offset = item.DateFinished.Sub(item.DateAdded)
 	}
-
 	return dataEnglishAll
 }
 
-type EnglishExercise struct {
-	id           int
-	name         string
-	idBook       int
-	page         int
-	dateAdded    time.Time
-	dateFinished time.Time
-	current      bool
-	offset       time.Duration
+func ReadingStat(title string, dataEnglishBooks []models.EnglishBookread, date time.Time) string {
+	//ymd := date.Format("2006-01-02")
+	inActive := true
+	flow := map[string]string{}
+	for key, item := range dataEnglishBooks {
+		if key == 0 && !item.Current {
+			inActive = false
+		}
+		added := item.DateAdded.Format("15:04")
+		finished := item.DateFinished.Format("15:04")
+		/*if item.DateAdded.Format("2006-01-02") != ymd {
+			if len(flow) > 0 {
+				break
+			}
+			continue
+		}*/
+		flow[added] = finished
+	}
+
+	// Получим ключи словаря в обратном порядке
+	keys := slices.Sorted(maps.Keys(flow))
+	slices.Reverse(keys)
+
+	flowOut := map[string]string{}
+	flowCounts := map[string]int{}
+	root := ""
+	finishPrev := ""
+	for _, added := range keys {
+		finish := flow[added]
+		if IsEqualTimes(added, finishPrev) {
+			flowOut[root] = finish
+			flowCounts[root]++
+		} else {
+			root = added
+			flowOut[added] = finish
+			flowCounts[added]++
+		}
+		finishPrev = finish
+	}
+
+	var style string
+	if inActive {
+		style = ` style="color:green"`
+	} else {
+		style = ` style="color:#aaa"`
+	}
+	html := fmt.Sprintf(`<div%v>%v`, style, title)
+	for key, value := range flowOut {
+		if value == "" {
+			value = "н.в."
+		}
+		html += fmt.Sprintf(` <span title='%v'>%v-%v &nbsp;</span>`, flowCounts[key], key, value)
+	}
+	html += `</div>`
+	return html
 }
 
-// Общая механика выборки из таблиц книг в структуру (альтернативно выборке в словарь)
-func getDataEnglish(sql string, db *sqlx.DB) []EnglishExercise {
-	rows, err := db.Query(sql)
+func IsEqualTimes(added string, finish string) bool {
+	if finish == "" {
+		return false
+	}
+	var hours, minutes time.Duration
+	_, err := fmt.Sscanf(added, "%d:%d", &hours, &minutes)
 	if err != nil {
-		panic(err)
+		log.Fatalf(`Ошибка сканирования %v`, err)
 	}
-	defer rows.Close()
-	var items []EnglishExercise
-	for rows.Next() {
-		p := EnglishExercise{}
-		err := rows.Scan(&p.id, &p.name, &p.idBook, &p.page, &p.dateAdded, &p.dateFinished)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		items = append(items, p)
+	t1 := minutes*time.Minute + hours*time.Hour
+
+	_, err = fmt.Sscanf(finish, "%d:%d", &hours, &minutes)
+	if err != nil {
+		log.Fatalf(`Ошибка сканирования %v`, err)
 	}
-	return items
+	t2 := minutes*time.Minute + hours*time.Hour
+
+	return math.Abs(t1.Seconds()-t2.Seconds()) < 180
 }

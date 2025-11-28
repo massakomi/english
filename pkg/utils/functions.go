@@ -17,7 +17,7 @@ func PregReplace(content string, pattern string, replacement string) string {
 }
 
 func GetCookie(name string, c *gin.Context) string {
-	cookie, err := c.Cookie("gin_cookie")
+	cookie, err := c.Cookie(name)
 	if err == nil {
 		return ""
 	}
