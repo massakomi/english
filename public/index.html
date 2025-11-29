@@ -1,4 +1,4 @@
-{{define "base"}}
+{{define "index.html"}}
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="/static/bootstrap.min.css" rel="stylesheet">
   <script src="/static/jquery.min.js"></script>
-  <title>{{template "title" .}} English</title>
+  <title>{{block "title" .}}English2{{end}}</title>
   <style>
     .table.small {width: auto}
     .table.small>:not(caption)>*>* {padding: .1rem .1rem;}
@@ -41,17 +41,17 @@
 
 
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="?page=exercise">Упражнения</a></li>
-        <li class="nav-item"><a class="nav-link" href="?page=exercise&articles=1">articles</a></li>
-        <li class="nav-item"><a class="nav-link" href="?page=exercise&articles=2">предлоги</a></li>
+        <li class="nav-item"><a class="nav-link" href="/exercise">Упражнения</a></li>
+        <li class="nav-item"><a class="nav-link" href="/exercise?articles=1">articles</a></li>
+        <li class="nav-item"><a class="nav-link" href="/exercise?articles=2">предлоги</a></li>
 
 
         <!--
         <li class="nav-item"><a class="nav-link" href="/english/?import=1">Импорт</a></li>
         <li class="nav-item"><a class="nav-link" href="/english/">Чтение</a></li>
         -->
-        <li class="nav-item"><a class="nav-link" href="?page=memory">Слова</a></li>
-        <li class="nav-item"><a class="nav-link" href="?page=category">Категории</a></li>
+        <li class="nav-item"><a class="nav-link" href="/memory">Слова</a></li>
+        <li class="nav-item"><a class="nav-link" href="/category">Категории</a></li>
         <li class="nav-item"><a class="nav-link" href="http://msc/index.php?table=english_bookread&db=tester&s=tbl_data" target="_blank">book</a></li>
         <li class="nav-item"><a class="nav-link" href="http://msc/index.php?s=tbl_data&table=english_words&db=tester" target="_blank">words</a></li>
       </ul>
@@ -81,7 +81,7 @@
 -->
 
 <div class="container" style="margin-top:70px;">
-{{template "main" .}}
+  {{block "main" .}}{{end}}
 </div>
 
 
@@ -106,10 +106,10 @@
   function loadNextBookPage()
   {
     let book = $('[name="id_book"]').val();
-    $.get('?action=get_page&book='+book, function(data) {
+    /* todo доделать $.get('?action=get_page&book='+book, function(data) {
       $('#readinfo').html('prev page ' + data)
       $('[name="readpage"]').val(1 + parseInt(data))
-    });
+    });*/
   }
   $('[name="readbook"]').change(function() {
     $('[name="book"]').val(this.value)

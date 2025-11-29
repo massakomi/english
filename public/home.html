@@ -1,19 +1,49 @@
-{{template "base" .}}
+{{template "index.html" .}}
 
 {{define "title"}}Flow{{end}}
 
 {{define "main"}}
 
     {{ if eq .word "" }}
-        {{template "home_top" .}}
+        {{template "home_top.html" .}}
     {{ end }}
 
-    {{template "home_table" .}}
+    {{template "home_table.html" .}}
 
     {{ .readingStat }}
 
+    <!--Книги по дням-->
+    {{ range .booksByDays }}
+        <div><b>{{.dmy}}</b> - {{.time}} <span style="color:green; font-size:10px;">{{.totalPages}}</span></div>
+        <div class="small">
+            {{ range .list }}
+                <i><a href="?book={{.book}}" style="{{.style}}; text-decoration:none;">{{.book}}</a></i> -
+                <span>{{.seconds}}</span>
+                (<span style="color:green">{{.pages}}</span>)
+                <span style="color:#aaa">{{.avg}}</span> &nbsp;
+            {{ end }}
+        </div>
+    {{ end }}
+    <p style="font-size:10px;"><a href="?noexercises=1&max=20">Без упражнений</a></p>
+
+    <div class="books-last">
+    {{ range .last5pages }}
+        <div>{{.page}} {{.name}} - {{.offset}}</div>
+    {{ end }}
+    </div>
+
+    <!-- Список всех книг -->
+    <hr /><ul>
+    {{ range .bookLast }}
+        <li>
+            <a style="{{ .style }}" href="?book={{ .name }}">{{ .name }}</a>
+            <span style="color:#aaa;font-size:12px;">- {{ .date }}  <b style="color:#ccc">{{ .page }}</b></span>
+        </li>
+    {{ end }}
+    </ul>
+
     {{ if eq .word "" }}
-        {{template "home_scripts" .}}
+        {{template "home_scripts.html" .}}
     {{ end }}
 
 

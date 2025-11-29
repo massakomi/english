@@ -8,6 +8,32 @@ import (
 	"time"
 )
 
+type EnglishBook struct {
+	Id        int
+	Name      string
+	Status    string
+	DateAdded time.Time
+}
+
+func GetBooksEx(database *sqlx.DB, sql string) []EnglishBook {
+	rows, err := database.Query(sql)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	var items []EnglishBook
+	for rows.Next() {
+		p := EnglishBook{}
+		err := rows.Scan(&p.Id, &p.Name, &p.Status, &p.DateAdded)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		items = append(items, p)
+	}
+	return items
+}
+
 func GetBooks(database *sqlx.DB) []map[string]interface{} {
 	return db.GetData("SELECT * FROM english_book ORDER BY name", database)
 }

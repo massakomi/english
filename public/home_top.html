@@ -1,4 +1,4 @@
-{{define "home_top"}}
+{{define "home_top.html"}}
 <form method="post">
   <input type="hidden" name="book" value="{{ .cookieBook }}">
   <div class="row">
@@ -34,7 +34,7 @@
 
 <a href="#" onclick="opentr('context'); return false;">context</a>
 <a href="#" onclick="opentr('contet'); return false;">google</a>
-{{ .countData }}
+{{ len .data }}
 &nbsp;
 <span id="get_word" style="color:green; font-size:12px;"></span>
 

@@ -46,7 +46,7 @@ func BaseForm(es string, space ...bool) string {
 }
 
 // Fs format seconds
-func Fs(seconds float64, opts ...bool) template.HTML {
+func Fs[T int | float64](seconds T, opts ...bool) template.HTML {
 	s := false
 	h := true
 	if len(opts) == 1 {
@@ -56,8 +56,8 @@ func Fs(seconds float64, opts ...bool) template.HTML {
 		s = opts[0]
 		h = opts[1]
 	}
-	hs := math.Floor(seconds / 3600)
-	ms := math.Floor((seconds - hs*60) / 60)
+	hs := math.Floor(float64(seconds) / 3600)
+	ms := math.Floor((float64(seconds) - hs*60) / 60)
 	var output string
 	if h {
 		output = fmt.Sprintf("%v:%02d", hs, int(ms))
@@ -65,7 +65,7 @@ func Fs(seconds float64, opts ...bool) template.HTML {
 		output = strconv.FormatInt(int64(ms), 10)
 	}
 	if s {
-		ss := math.Floor(seconds - hs*3600 - ms*60)
+		ss := math.Floor(float64(seconds) - hs*3600 - ms*60)
 		output += fmt.Sprintf(":%02d", int(ss))
 	}
 	return template.HTML(fmt.Sprintf(`<span title="%v">%v</span>`, seconds, output))

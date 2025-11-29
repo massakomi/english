@@ -1,0 +1,135 @@
+<script type="text/javascript">
+  $(document).ready(function(){
+    function equalPrepare(value, lc=true)
+    {
+      if (lc) {
+        value = value.toLowerCase();
+      }
+      value = value.replace(/[&!?,.\:;\-\(\)]/g, '')
+      value = value.replace(/\s+$/, '')  // пробел в конце
+      value = value.replace(/\s+/g, ' ') // двойные пробелы
+      value = value.replace(/\'ll/g, ' will')
+      value = value.replace(/won\'t/g, 'will not')
+      value = value.replace(/shan\'t/g, 'will not')
+      value = value.replace(/didn\'t/g, 'did not')
+      value = value.replace(/doesn\'t/g, 'does not')
+      value = value.replace(/hadn\'t/g, 'had not')
+      value = value.replace(/hasn\'t/g, 'has not')
+      value = value.replace(/haven\'t/g, 'have not')
+      value = value.replace(/needn\'t/g, 'need not')
+      value = value.replace(/can\'t/g, 'can not')
+      value = value.replace(/cannot/g, 'can not')
+      value = value.replace(/wouldn\'t/g, 'would not')
+      value = value.replace(/couldn\'t/g, 'could not')
+      value = value.replace(/shouldn\'t/g, 'should not')
+      value = value.replace(/(i|you|we)\'d/ig, '$1 would')
+      value = value.replace(/let's/ig, 'let us')
+      value = value.replace(/\'ve/g, ' have')
+      value = value.replace(/\'s/g, ' is')
+      // 's - is  've - have
+      return value;
+    }
+    function isEqual(value, valid)
+    {
+      value = equalPrepare(value);
+      validx = equalPrepare(valid);
+      let isValid = validx.indexOf(value) === 0 || valid.toLowerCase().indexOf(value) === 0;
+      if (!isValid) {
+        console.log('"'+value+'" - value')
+        console.log('"'+valid+'" - valid')
+        console.log('"'+validx+'" - validx')
+      }
+      return isValid;
+    }
+    function registerExercise(index, errors, comment='', time='')
+    {
+      const getIndex = new URLSearchParams(window.location.search).get('index');
+      $.get('?page=exercise&action=register_exercise&exercise='+getIndex+'&index='+index+'&errors='+errors+'&time='+time+'&comment='+encodeURIComponent(comment), function(data) {
+      console.log(data)
+    });
+    }
+    function recalculateErrorsCompare()
+    {
+      let errorsOldTotal = 0
+      let errorsNewTotal = 0;
+      $('[data-errors-new]').each(function() {
+        let errorsOld = parseInt($(this).data('errors-old'))
+        let errorsNew = parseInt($(this).data('errors-new'))
+        if (!isNaN(errorsOld) && !isNaN(errorsNew)) {
+          errorsOldTotal += errorsOld;
+          errorsNewTotal += errorsNew;
+        }
+      })
+      document.title = errorsOldTotal + ' => ' + errorsNewTotal
+      //$('#errors-compare').html(errorsOldTotal + ' => ' + errorsNewTotal)
+    }
+    /*$('[name="eng-check"]').dblclick(function() {
+        $(this).parent().find('.eng-text').show()
+    })*/
+    $('[name="eng-check"]').focus(function(e) {
+      if (!this.dataset.starttime) {
+        var timestamp = (Date.now() / 1000).toFixed(0);
+        this.dataset.starttime = timestamp
+      }
+      $('.q-block').removeClass('active')
+      $(this).parent().addClass('active')
+    })
+    $('[name="eng-check"]').keyup(function(e) {
+      let length = this.value.length
+      let engText = $(this).parent().find('.eng-text');
+      let validText = engText.text();
+      let isBackspace = e.key == 'Backspace';
+      $(this).removeClass('is-valid')
+      $(this).removeClass('is-invalid')
+      if (isEqual(this.value, validText)) {
+        // count errors
+        if (this.errorLast && isBackspace) {
+          if (!this.errors) {
+            this.errors = 1;
+          } else {
+            this.errors ++;
+          }
+          $(this).parent().find('.errors').html(this.errors)
+        }
+        this.errorLast = false;
+        $(this).addClass('is-valid')
+        let a = equalPrepare(this.value);
+        let b = equalPrepare(validText);
+        console.log('"'+a+'" - a')
+        console.log('"'+b+'" - b')
+        // если текст полностью введен
+        if (a.length == b.length) {
+          engText.show()
+          console.clear()
+          let questionTime = 0
+          if (this.dataset.starttime) {
+            var timestamp = (Date.now() / 1000).toFixed(0);
+            questionTime = timestamp - this.dataset.starttime
+            $(this).parent().find('.time').html(questionTime + 's')
+          }
+          registerExercise(this.dataset.index, this.errors, '', questionTime)
+          if (!this.errors) {
+            this.errors = 0;
+          }
+          $(this).attr('data-errors-new', this.errors)
+          recalculateErrorsCompare()
+          $(this).parent().find('.errors').html(this.errors + ' saved!')
+        }
+      } else {
+        $(this).addClass('is-invalid')
+        this.errorLast = true;
+        // показать текущий вводимый отрывок
+        let a = equalPrepare(this.value);
+        let b = equalPrepare(validText, false)
+        $('#readbook').html(b.substr(0, a.length))
+      }
+    })
+    // комментарий сохранить
+    $('.q-info').change(function(e) {
+      let input = $(this).closest('.q-block').find('[name="eng-check"]')
+      let index = input.data('index');
+      registerExercise(index, '', this.value)
+    })
+  });
+
+</script>

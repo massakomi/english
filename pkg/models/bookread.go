@@ -8,17 +8,18 @@ import (
 
 type EnglishBookread struct {
 	id           int
-	name         string
+	Name         string
 	idBook       int
-	page         int
+	Page         int
 	DateAdded    time.Time
 	DateFinished time.Time
 	Current      bool
-	Offset       time.Duration
+	Offset       float64
 }
 
 // Метод с встроенным запросом для выборки
 func GetEnglishBookRead(database *sqlx.DB, withExercises bool, exercisesMaxDays int) []EnglishBookread {
+	limit := 100
 	add := ""
 	if withExercises {
 		add = fmt.Sprintf(`UNION (
@@ -26,7 +27,7 @@ func GetEnglishBookRead(database *sqlx.DB, withExercises bool, exercisesMaxDays 
 			from english_exercise 
 			where date_added > date_add(NOW(), -'%v day'::interval))`, exercisesMaxDays)
 	}
-	sql := fmt.Sprintf(`select * from english_bookread %v order by date_added desc limit 3`, add)
+	sql := fmt.Sprintf(`select * from english_bookread %v order by date_added desc limit %v`, add, limit)
 	dataEnglishAll := GetEnglishBookReadBySql(database, sql)
 	return dataEnglishAll
 }
@@ -41,7 +42,7 @@ func GetEnglishBookReadBySql(database *sqlx.DB, sql string) []EnglishBookread {
 	var items []EnglishBookread
 	for rows.Next() {
 		p := EnglishBookread{}
-		err := rows.Scan(&p.id, &p.name, &p.idBook, &p.page, &p.DateAdded, &p.DateFinished)
+		err := rows.Scan(&p.id, &p.Name, &p.idBook, &p.Page, &p.DateAdded, &p.DateFinished)
 		if err != nil {
 			fmt.Println(err)
 			continue

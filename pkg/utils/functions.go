@@ -3,6 +3,7 @@ package utils
 import (
 	"github.com/gin-gonic/gin"
 	"regexp"
+	"sort"
 	"strconv"
 )
 
@@ -22,4 +23,20 @@ func GetCookie(name string, c *gin.Context) string {
 		return ""
 	}
 	return cookie
+}
+
+// MapKeySortByValues сортировка ключей словаря
+func MapKeySortByValues[T int | int64](stat map[string]T, desc bool) []string {
+	keys := make([]string, 0, len(stat))
+	for key := range stat {
+		keys = append(keys, key)
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		if desc {
+			return stat[keys[i]] > stat[keys[j]]
+		} else {
+			return stat[keys[i]] < stat[keys[j]]
+		}
+	})
+	return keys
 }

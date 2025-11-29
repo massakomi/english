@@ -1,0 +1,33 @@
+<!-- общий ксс для всего -->
+<style>
+  .q-block {}
+  .a {font-size:12px; margin:5px 0 5px;}
+  .b {font-size:12px; margin:0 0 5px; color:green; display:none;}
+  .a .errors {color:red; font-size:11px;}
+  .q-info {font-size: 10px; padding: 0; width: 50px; border: 1px solid #ccc;}
+  .q-block:not(.active) .q-info {display:none;}
+  .q-info:focus {width:300px;}
+</style>
+
+
+<!-- список упражнений -->
+<style>
+  .exercise-menu {font-size:12px;}
+  .exercise-menu a {text-decoration:none;}
+
+  table.tt {empty-cells:show; border-collapse:collapse; ; margin:10px 0}
+  table.tt td {border:1px solid #ccc; padding: 3px; vertical-align: top;}
+  table.tt tr:nth-child(odd) {background-color:#eee; }
+</style>
+<table class="table small exercise-menu">
+  {{ range .data }}
+  <tr>
+    <td><a href="?page=exercise&index={{.index}}"{{.style}} title="{{.time}}">{{.index}}</a></td>
+    <td>{{.line}} ({{.count}})</td>
+    <td>{{.days_ago}}</td>
+    <td>{{.time}}</td>
+    <td><span style="color:pink">{{.timePerQuestion}}</span></td>
+    <td style="font-size:10px; color:#ccc">{{.errorsPerQuestoin}}</td>
+  </tr>
+  {{ end }}
+</table>

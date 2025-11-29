@@ -1,0 +1,17 @@
+{{template "index.html" .}}
+
+{{define "title"}}Страницы книги {{ .book }}{{end}}
+
+{{define "main"}}
+
+<h2>Страницы книги {{ .book }}</h2>
+
+{{ range .bookPages }}
+    <div>
+        {{ .page }} - {{ .offset }} {{if .current}} --- {{end}}
+        <span style="color:#ccc">{{ .date }}</span>
+        <span style="color:#ccc; font-size:11px;">{{ .time }}</span>
+    </div>
+{{ end }}
+
+{{end}}

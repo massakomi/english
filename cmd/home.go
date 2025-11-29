@@ -8,15 +8,14 @@ import (
 	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"maps"
 	"math"
 	"slices"
 	"strconv"
-
-	//"github.com/gobs/pretty"
-	"github.com/jmoiron/sqlx"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -25,9 +24,9 @@ import (
 type assoc []map[string]interface{}
 
 // getDataForHome данные для главной страницы, массив слов
-func getDataForHome(c *gin.Context, database *sqlx.DB) assoc {
-	limit := 2
-	where := buildWhereForHomeData(c)
+func getDataForHome(context *gin.Context, database *sqlx.DB) assoc {
+	limit := 5
+	where := buildWhereForHomeData(context)
 	//fmt.Println(where)
 	sql := fmt.Sprintf(`select *
 		from english_words
@@ -37,12 +36,12 @@ func getDataForHome(c *gin.Context, database *sqlx.DB) assoc {
 	//fmt.Println(sql)
 	data := db.GetData(sql, database)
 	data, _ = fillShortAndCalcStat(data)
-	data = prepareDataForTable(data, c, database)
+	data = prepareDataForTable(data, context, database)
 	return data
 }
 
 // Подготовка данных перед выводом в таблицу
-func prepareDataForTable(data assoc, c *gin.Context, database *sqlx.DB) assoc {
+func prepareDataForTable(data assoc, context *gin.Context, database *sqlx.DB) assoc {
 	baseStat := getBaseStat(data, database)
 	//pretty.PrettyPrint(baseStat)
 
@@ -56,7 +55,7 @@ func prepareDataForTable(data assoc, c *gin.Context, database *sqlx.DB) assoc {
 		}
 
 		format := "15:04"
-		if c.Query("word") != "" {
+		if context.Query("word") != "" {
 			item["page"] = strconv.FormatInt(item["page"].(int64), 10) + " " + item["book"].(string)
 			format = "Jan 02 15:04"
 		}
@@ -64,7 +63,7 @@ func prepareDataForTable(data assoc, c *gin.Context, database *sqlx.DB) assoc {
 		item["date_added"] = t.Format(format)
 
 		item["index"] = item["id"]
-		if c.Query("book") != "" || c.PostForm("book") != "" {
+		if context.Query("book") != "" || context.PostForm("book") != "" {
 			item["index"] = cnt - key
 		}
 	}
@@ -120,39 +119,44 @@ func getBaseStat(data assoc, database *sqlx.DB) map[string]int {
 }
 
 // метод для getBaseStat
-func buildWhereForHomeData(c *gin.Context) string {
+func buildWhereForHomeData(context *gin.Context) string {
 	where := []string{"true"}
-	if c.Query("word") != "" {
-		word := c.Query("word")
+	if context.Query("word") != "" {
+		word := context.Query("word")
 		word = utils.PregReplace(word, "[\\s\\d]+$", "")
 		word = text.BaseForm(word)
 		where = append(where, fmt.Sprintf(`english_short_auto like '%v%%'`, word))
 	}
-	idBook := c.PostForm("book")
+	idBook := context.PostForm("book")
 	if utils.IsNumeric(idBook) {
 		where = append(where, fmt.Sprintf(`id_book = '%v'`, idBook))
-	} else if c.Query("book") != "" {
-		where = append(where, fmt.Sprintf(`book = '%v'`, c.Query("book")))
+	} else if context.Query("book") != "" {
+		where = append(where, fmt.Sprintf(`book = '%v'`, context.Query("book")))
 	}
 	return strings.Join(where, " AND ")
 }
 
-// Статистика чтения книг
-func GetDataEnglishBooks(max int, c *gin.Context, database *sqlx.DB) []models.EnglishBookread {
-	dataEnglishAll := models.GetEnglishBookRead(database, c.Query("noexercises") == "", max)
-	for _, item := range dataEnglishAll {
+// GetDataEnglishBooks Статистика чтения книг. Это массив структур EnglishBookread, где каждая структура - прочтение одной страницы книги
+// Current true текущая страница читаю сейчас.
+// Offset сколько секунд заняло прочтение этой страницы.
+// DateAdded DateFinished - Даты начало конца чтение страницы
+func GetDataEnglishBooks(max int, context *gin.Context, database *sqlx.DB) []models.EnglishBookread {
+	dataEnglishAll := models.GetEnglishBookRead(database, context.Query("noexercises") == "", max)
+	for key, item := range dataEnglishAll {
 		if item.DateFinished == item.DateAdded {
 			// echo notice := fmt.Sprintf(`Есть открытые страницы (%v, %v)`, item.name, item.page)
 			item.Current = true
 			item.DateFinished = time.Now()
 		}
-		item.Offset = item.DateFinished.Sub(item.DateAdded)
+		item.Offset = item.DateFinished.Sub(item.DateAdded).Seconds()
+		dataEnglishAll[key] = item
 	}
 	return dataEnglishAll
 }
 
+// ReadingStat блок статистики по чтению за определенный день
 func ReadingStat(title string, dataEnglishBooks []models.EnglishBookread, date time.Time) string {
-	//ymd := date.Format("2006-01-02")
+	ymd := date.Format("2006-01-02")
 	inActive := true
 	flow := map[string]string{}
 	for key, item := range dataEnglishBooks {
@@ -161,12 +165,12 @@ func ReadingStat(title string, dataEnglishBooks []models.EnglishBookread, date t
 		}
 		added := item.DateAdded.Format("15:04")
 		finished := item.DateFinished.Format("15:04")
-		/*if item.DateAdded.Format("2006-01-02") != ymd {
+		if item.DateAdded.Format("2006-01-02") != ymd {
 			if len(flow) > 0 {
 				break
 			}
 			continue
-		}*/
+		}
 		flow[added] = finished
 	}
 
@@ -208,6 +212,7 @@ func ReadingStat(title string, dataEnglishBooks []models.EnglishBookread, date t
 	return html
 }
 
+// IsEqualTimes принимает строки вида "HH:mm" и возвращает true если между ними не более 3 минут
 func IsEqualTimes(added string, finish string) bool {
 	if finish == "" {
 		return false
@@ -226,4 +231,152 @@ func IsEqualTimes(added string, finish string) bool {
 	t2 := minutes*time.Minute + hours*time.Hour
 
 	return math.Abs(t1.Seconds()-t2.Seconds()) < 180
+}
+
+var BookStatus = map[string][]string{}
+var BookStatusOnce sync.Once
+
+// bookStyle стиль цвет книги в зависимости от статуса (прочитал или нет)
+func bookStyle(bookName string, database *sqlx.DB) string {
+	BookStatusOnce.Do(func() {
+		books := models.GetBooksEx(database, "SELECT * FROM english_book")
+		for _, item := range books {
+			BookStatus[item.Status] = append(BookStatus[item.Status], item.Name)
+		}
+	})
+	style := ""
+	if BookStatus["read"] != nil && slices.Contains(BookStatus["read"], bookName) {
+		style = "color:green"
+	}
+	if BookStatus["no"] != nil && slices.Contains(BookStatus["no"], bookName) {
+		style = "color:red"
+	}
+	return style
+}
+
+// BooksByDays сгруппированные списки книг по дням
+func BooksByDays(dataEnglishBooks []models.EnglishBookread, database *sqlx.DB) []map[string]any {
+	bookStat, bookStatDmy, keys := statForBooksByDays(dataEnglishBooks)
+	booksByDays := []map[string]any{}
+	maxItems := 10
+	for _, dmy := range keys {
+		books := bookStat[dmy]
+		list := []map[string]any{}
+		totalPages := 0
+		for bookName, item := range books {
+			avg := item["seconds"] / item["pages"]
+			list = append(list, map[string]any{
+				"book":    bookName,
+				"style":   bookStyle(bookName, database),
+				"seconds": text.Fs(item["seconds"]),
+				"pages":   item["pages"],
+				"avg":     text.Fs(avg, true, false),
+			})
+			if bookName != "упражнения" {
+				totalPages += item["pages"]
+			}
+		}
+		booksByDays = append(booksByDays, map[string]any{
+			"dmy":        dmy,
+			"time":       text.Fs(bookStatDmy[dmy]),
+			"totalPages": totalPages,
+			"list":       list,
+		})
+		if maxItems--; maxItems == 0 {
+			break
+		}
+	}
+	return booksByDays
+}
+
+// statForBooksByDays собирает статистические словари для функции BooksByDays
+func statForBooksByDays(dataEnglishBooks []models.EnglishBookread) (map[string]map[string]map[string]int, map[string]float64, []string) {
+	bookStat := map[string]map[string]map[string]int{}
+	bookStatDmy := map[string]float64{}
+	for _, item := range dataEnglishBooks {
+		date := item.DateAdded.Format("2006-01-02")
+		if bookStat[date] == nil {
+			bookStat[date] = map[string]map[string]int{}
+		}
+		if bookStat[date][item.Name] == nil {
+			bookStat[date][item.Name] = map[string]int{}
+		}
+		bookStat[date][item.Name]["pages"]++
+		bookStat[date][item.Name]["seconds"] += int(item.Offset)
+		bookStatDmy[date] += item.Offset
+	}
+	keys := slices.Sorted(maps.Keys(bookStat))
+	slices.Reverse(keys)
+	return bookStat, bookStatDmy, keys
+}
+
+// Last5Pages для блока последних 5 страниц
+func Last5Pages(dataEnglishBooks []models.EnglishBookread, context *gin.Context) []map[string]any {
+	i := 0
+	maxItems := 5
+	data := []map[string]any{}
+	for {
+		item := dataEnglishBooks[i]
+		i++
+		if context.Query("book") != "" && context.Query("book") != item.Name {
+			continue
+		}
+		data = append(data, map[string]any{
+			"page":   item.Page,
+			"name":   item.Name,
+			"offset": text.Fs(item.Offset, true, false),
+		})
+		maxItems--
+		if maxItems == 0 {
+			break
+		}
+	}
+	return data
+}
+
+// BookLast список книг, сортированные по дате последнего чтения с датой и количеством страниц
+func BookLast(dataEnglishBooks []models.EnglishBookread, database *sqlx.DB) []map[string]any {
+	bookLast := map[string]map[string]any{}
+	bookForSort := map[string]int64{}
+	for _, item := range dataEnglishBooks {
+		if _, ok := bookLast[item.Name]; !ok {
+			bookLast[item.Name] = map[string]any{
+				"date":  item.DateAdded.Format("2006-01-02"),
+				"page":  item.Page,
+				"name":  item.Name,
+				"style": bookStyle(item.Name, database),
+			}
+			bookForSort[item.Name] = item.DateAdded.Unix()
+		}
+	}
+	keys := utils.MapKeySortByValues(bookForSort, true)
+	var bookSlice []map[string]any
+	for _, key := range keys {
+		bookSlice = append(bookSlice, bookLast[key])
+	}
+	return bookSlice
+}
+
+// BookPages для роута /book список страниц одной книги
+func BookPages(bookName string, dataEnglishBooks []models.EnglishBookread) []map[string]any {
+	pages := make([]map[string]any, 0)
+	last := ""
+	for _, item := range dataEnglishBooks {
+		if bookName == "" || bookName != item.Name {
+			continue
+		}
+		date := item.DateAdded.Format("2006-01-02")
+		info := map[string]any{
+			"page":    item.Page,
+			"offset":  text.Fs(item.Offset, true, false),
+			"current": item.Current,
+			"time":    item.DateAdded.Format("15:04"),
+		}
+		if date != last {
+			info["date"] = date
+		}
+		pages = append(pages, info)
+		last = item.DateAdded.Format("2006-01-02")
+	}
+	return pages
 }

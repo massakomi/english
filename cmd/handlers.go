@@ -7,39 +7,63 @@ import (
 	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"strconv"
-
 	//"github.com/gobs/pretty"
 	"html/template"
 	"net/http"
+	"strconv"
 	"time"
 )
 
-func home(c *gin.Context) {
+func home(context *gin.Context) {
 	database := db.Connect()
-	data := getDataForHome(c, database)
-	//pretty.PrettyPrint(data)
+	data := getDataForHome(context, database)
 	books := models.GetBooks(database)
 
-	maxDays, _ := strconv.Atoi(c.DefaultQuery("max", "10"))
-	dataEnglishBooks := GetDataEnglishBooks(maxDays, c, database)
-	// pretty.PrettyPrint(dataEnglishBooks)
+	maxDays, _ := strconv.Atoi(context.DefaultQuery("max", "10"))
+	dataEnglishBooks := GetDataEnglishBooks(maxDays, context, database)
+	//pretty.PrettyPrint(dataEnglishBooks)
 
 	html := ReadingStat("Сегодня", dataEnglishBooks, time.Now())
 	html += ReadingStat("Вчера", dataEnglishBooks, time.Now().Add(-time.Hour*24))
 
-	c.HTML(http.StatusOK, "home.html", gin.H{
+	context.HTML(http.StatusOK, "home", gin.H{
 		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
-		"book":             c.Query("book"),
-		"word":             c.Query("word"),
-		"cookieBook":       utils.GetCookie("book", c),
-		"countData":        len(data),
+		"book":             context.Query("book"),
+		"word":             context.Query("word"),
+		"cookieBook":       utils.GetCookie("book", context),
 		"data":             data,
 		"readingStat":      template.HTML(html),
+		"bookLast":         BookLast(dataEnglishBooks, database),
+		"booksByDays":      BooksByDays(dataEnglishBooks, database),
+		"last5pages":       Last5Pages(dataEnglishBooks, context),
+		"template":         "home",
 	})
 }
 
-func updateAuto(c *gin.Context) {
+func book(context *gin.Context) {
+	database := db.Connect()
+	books := models.GetBooks(database)
+	maxDays, _ := strconv.Atoi(context.DefaultQuery("max", "10"))
+	dataEnglishBooks := GetDataEnglishBooks(maxDays, context, database)
+
+	context.HTML(http.StatusOK, "book", gin.H{
+		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
+		"book":             context.Query("book"),
+		"bookPages":        BookPages(context.Query("book"), dataEnglishBooks),
+		"template":         "book",
+	})
+}
+
+func exercise(context *gin.Context) {
+	database := db.Connect()
+	books := models.GetBooks(database)
+
+	context.HTML(http.StatusOK, "exercise", gin.H{
+		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
+	})
+}
+
+func updateAuto(context *gin.Context) {
 	database := db.Connect()
 	data := db.GetData(`select * from english_words where english_short_auto ='' or english_short_auto is null`, database)
 	for _, item := range data {
@@ -50,7 +74,7 @@ func updateAuto(c *gin.Context) {
 			database.MustExec(sql)
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
+	context.JSON(http.StatusOK, gin.H{
 		"status": "ok",
 	})
 }
