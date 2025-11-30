@@ -5,19 +5,34 @@ import (
 	"english/pkg/db"
 	"english/pkg/models"
 	"english/pkg/text"
+	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gobs/pretty"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
 func TestGo() {
-	TestAPT()
+	TestRegexp()
 }
 
-func TestAPT() {
+func TestRegexp() {
+	content, err := os.ReadFile(`data/exercise.txt`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//fmt.Println(string(content))
+	data := utils.PregMatchAllEx(`(?is)Еxеrcіsе (\d+)[\s\.]+[^\r\n]+`, string(content))
+	fmt.Println(len(data))
+	/*for _, item := range data {
+		fmt.Println(item[1])
+	}*/
+}
+
+func TestModels() {
 	//database := db.Connect()
 	//read := models.GetLastBookPage(database, 1)
 

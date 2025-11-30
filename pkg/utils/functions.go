@@ -17,6 +17,31 @@ func PregReplace(content string, pattern string, replacement string) string {
 	return regex.ReplaceAllString(content, replacement)
 }
 
+func PregMatchAll(pattern string, text string) []string {
+	re := regexp.MustCompile(pattern)
+	return re.FindAllString(text, -1)
+}
+
+// с субпаттернами
+func PregMatchAllEx(pattern string, text string) [][]string {
+	re := regexp.MustCompile(pattern)
+	return re.FindAllStringSubmatch(text, -1)
+}
+
+func PregMatch(pattern string, text string) string {
+	re := regexp.MustCompile(pattern)
+	return re.FindString(text)
+}
+
+func PregMatchEx(pattern string, text string) []string {
+	re := regexp.MustCompile(pattern)
+	return re.FindStringSubmatch(text)
+}
+
+func PregSplit(pattern string, text string) []string {
+	return regexp.MustCompile(pattern).Split(text, -1)
+}
+
 func GetCookie(name string, c *gin.Context) string {
 	cookie, err := c.Cookie(name)
 	if err == nil {
