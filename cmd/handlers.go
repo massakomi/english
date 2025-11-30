@@ -27,7 +27,7 @@ func home(context *gin.Context) {
 	html += ReadingStat("Вчера", dataEnglishBooks, time.Now().Add(-time.Hour*24))
 
 	context.HTML(http.StatusOK, "home", gin.H{
-		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
 		"book":             context.Query("book"),
 		"word":             context.Query("word"),
 		"cookieBook":       utils.GetCookie("book", context),
@@ -47,7 +47,7 @@ func book(context *gin.Context) {
 	dataEnglishBooks := GetDataEnglishBooks(maxDays, context, database)
 
 	context.HTML(http.StatusOK, "book", gin.H{
-		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
 		"book":             context.Query("book"),
 		"bookPages":        BookPages(context.Query("book"), dataEnglishBooks),
 		"template":         "book",
@@ -59,7 +59,7 @@ func exercise(context *gin.Context) {
 	books := models.GetBooks(database)
 
 	context.HTML(http.StatusOK, "exercise", gin.H{
-		"getBooksSelector": template.HTML(models.BooksSelector(books, 0)),
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
 	})
 }
 

@@ -38,6 +38,7 @@ func GetBooks(database *sqlx.DB) []map[string]interface{} {
 	return db.GetData("SELECT * FROM english_book ORDER BY name", database)
 }
 
+// BooksSelector todo не знаю что тут делать. selected принимает int, но передаю я там допустим ?book=string . а куки вообще фз где ставятся
 func BooksSelector(books []map[string]interface{}, selected int) string {
 	html := `<select required name="id_book" class="form-control form-control-sm me-2 w-50">`
 	html += `<option value="">Книга</option>`

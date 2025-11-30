@@ -14,10 +14,18 @@ import (
 )
 
 func TestGo() {
-	//TestServer()
+	TestAPT()
 }
 
-func TestFlow() {
+func TestAPT() {
+	//database := db.Connect()
+	//read := models.GetLastBookPage(database, 1)
+
+	//t := models.AveragePageTime(database, 51)
+	//fmt.Println(t)
+}
+
+func TestIsEqualTimes() {
 	is := cmd.IsEqualTimes("12:40", "")
 	fmt.Println(is)
 }

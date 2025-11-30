@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"log"
-	"sync"
+	"maps"
+	"slices"
+	"strconv"
+	"time"
 )
 
 func Connect() *sqlx.DB {
@@ -47,27 +50,27 @@ func GetData(sql string, db *sqlx.DB) []map[string]interface{} {
 	return results
 }
 
-// Singleton represents the type for which we want a single instance.
-type Singleton struct {
-	data string
-}
+// GetFirstVal получаем первое значение первой строки в виде string
+func GetFirstVal(sql string, database *sqlx.DB) string {
+	row := GetData(sql, database)
+	if len(row) == 0 {
+		return ""
+	}
+	key := slices.Sorted(maps.Keys(row[0]))[0]
+	if row[0][key] == nil {
+		return ""
+	}
 
-var (
-	instance *Singleton
-	once     sync.Once
-)
-
-// GetInstance returns the single instance of the Singleton.
-func GetInstance() *Singleton {
-	once.Do(func() {
-		// This code block will be executed only once, even with concurrent calls.
-		instance = &Singleton{data: "Initialized Data"}
-		fmt.Println("Singleton instance created.")
-	})
-	return instance
-}
-
-// ExampleMethod demonstrates a method on the Singleton instance.
-func (s *Singleton) ExampleMethod() {
-	fmt.Printf("Singleton data: %s\n", s.data)
+	var dt string
+	switch v := row[0]["dt"].(type) {
+	case int:
+		dt = strconv.FormatInt(int64(row[0]["dt"].(int)), 10)
+	case string:
+		dt = row[0]["dt"].(string)
+	case time.Time:
+		dt = row[0]["dt"].(time.Time).Format("2006-01-02 15:04:05")
+	default:
+		log.Panicf("I don't know about type %T!\n", v)
+	}
+	return dt
 }

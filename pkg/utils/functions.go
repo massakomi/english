@@ -25,6 +25,19 @@ func GetCookie(name string, c *gin.Context) string {
 	return cookie
 }
 
+func GetPostDefault(name string, context *gin.Context) string {
+	return context.DefaultQuery(name, context.DefaultPostForm(name, GetCookie(name, context)))
+}
+
+func GetPostDefaultInt(name string, context *gin.Context) int {
+	str := GetPostDefault(name, context)
+	result, err := strconv.Atoi(str)
+	if err != nil {
+		return result
+	}
+	return 0
+}
+
 // MapKeySortByValues сортировка ключей словаря
 func MapKeySortByValues[T int | int64](stat map[string]T, desc bool) []string {
 	keys := make([]string, 0, len(stat))

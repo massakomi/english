@@ -1,24 +1,13 @@
 
 
-
-- $content главной flow.php
 - getBooksSelector нужно сделать selected = $_GET['book'] ?: $_POST['book'] ?: $_COOKIE['book']
-
+- вынести posgres connect в .env
 
 - реализовать функции
-  - baseForm
-  - fs
-  - addBookPage
-  + getBooks
-  + getBooksSelector
-  - getBookName
-  - averagePageTime
-  - autoPagination
-  - getLastBookPage
   - getWords
   плюс какие-то методы из init.php нужно будет
 
-- реализовать блоки
+- реализовать блоки index.php
   - Внесение новых слов в базу чтения
   - readpage Регистрация прочитанных страниц
   - get_word Получение истории переводов слов
@@ -28,8 +17,7 @@
   - import
 
 - перенос файлов
-  - category.php
   - exercise.php
+  - category.php
   - memory.php
   - friends.php
-  - flow.php
