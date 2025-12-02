@@ -22,12 +22,12 @@
 <table class="table small exercise-menu">
   {{ range .data }}
   <tr>
-    <td><a href="?page=exercise&index={{.index}}"{{.style}} title="{{.time}}">{{.index}}</a></td>
+    <td><a href="?page=exercise&index={{.index}}" {{ .style | attr }} title="{{.time}}">{{.index}}</a></td>
     <td>{{.line}} ({{.count}})</td>
-    <td>{{.days_ago}}</td>
-    <td>{{.time}}</td>
-    <td><span style="color:pink">{{.timePerQuestion}}</span></td>
-    <td style="font-size:10px; color:#ccc">{{.errorsPerQuestoin}}</td>
+    <td><span style="font-size:10px; color:#acc" title="{{.dateAdded}}">{{.dateText}}</span></td>
+    <td title="Время выполнения в минутах">{{.time}}</td>
+    <td><span style="color:pink" title="timePerQuestion">{{.timePerQuestion}}</span></td>
+    <td style="font-size:10px; color:#ccc" title="errorsPerQuestion">{{.errorsPerQuestion}}</td>
   </tr>
   {{ end }}
 </table>

@@ -60,6 +60,7 @@ func exercise(context *gin.Context) {
 
 	context.HTML(http.StatusOK, "exercise", gin.H{
 		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
+		"data":             GetDataForList(database),
 	})
 }
 

@@ -1,7 +1,11 @@
 package utils
 
 import (
+	"bufio"
 	"github.com/gin-gonic/gin"
+	"log"
+	"math"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -10,6 +14,11 @@ import (
 func IsNumeric(v string) bool {
 	_, err := strconv.Atoi(v)
 	return err == nil
+}
+
+func RoundFloat(val float64, precision uint) float64 {
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(val*ratio) / ratio
 }
 
 func PregReplace(content string, pattern string, replacement string) string {
@@ -77,4 +86,29 @@ func MapKeySortByValues[T int | int64](stat map[string]T, desc bool) []string {
 		}
 	})
 	return keys
+}
+
+func ScanFile(filename string, callback func(string)) {
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		callback(scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func SumIntSlice(numbers []int) int {
+	sum := 0
+	for _, number := range numbers {
+		sum += number
+	}
+	return sum
 }
