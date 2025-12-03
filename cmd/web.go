@@ -21,6 +21,7 @@ func Run() {
 	r.GET("/book", book)
 	r.GET("/exercise", exercise)
 	r.GET("/exercise/:index", exercisePage)
+	r.GET("/exercise/start/:index", exerciseStart)
 	r.GET("/update-auto", updateAuto)
 
 	if err := r.Run(":8080"); err != nil {

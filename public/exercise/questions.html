@@ -29,17 +29,18 @@
 
 <br /><br /><br />
 
+
 <script type="text/javascript">
   $(document).ready(function(){
-    var hideAfterStart = false; //<?=(int)$hideAfterStart?>;
-    var exerficeExists = false; //<?=(int)(bool)$exerciseInfo?>;
+    var hideAfterStart = true;
+    var exerficeExists = {{.exerciseInfo.Page}}
     if (!exerficeExists || hideAfterStart) {
       $('.exercise-start').val('Начать {{.exerciseIndex}}')
     } else {
       $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
     }
     $('.exercise-start').click(function() {
-      $.get('?page=exercise&action=start_exercise&exercise={{.exerciseIndex}}', function(data) {
+      $.get('/exercise/start/{{.exerciseIndex}}', function(data) {
         if (data) {
           alert(data);
         } else {

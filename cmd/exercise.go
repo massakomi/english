@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"english/pkg/db"
 	"english/pkg/models"
 	"english/pkg/utils"
 	"fmt"
@@ -15,21 +16,46 @@ import (
 	"time"
 )
 
-func addExercise() {
+func addExercise(database *sqlx.DB, values map[string]any) {
+	if values["date_added"] == nil {
+		values["date_added"] = time.Now()
+	}
+	if values["date_finished"] == nil {
+		values["date_finished"] = time.Now()
+	}
+	db.Insert(database, `english_exercise`, values)
 }
 
-func updateExercise() {
+func updateExercise(database *sqlx.DB, id int) {
+	db.Update(database, `english_exercise`, id, map[string]any{
+		"date_finished": time.Now(),
+	})
 }
 
-func updateExerciseIfStarted() {
+func UpdateExerciseIfStarted(database *sqlx.DB, exercise string, add bool) {
+	info := GetExerciseStarted(database, exercise)
+	if info.Page > 0 {
+		updateExercise(database, info.Id)
+	} else {
+		if add {
+			addExercise(database, map[string]any{"page": exercise})
+		}
+	}
 }
 
-func getExerciseStarted() {
+func GetExerciseStarted(database *sqlx.DB, exercise string) models.Exercise {
+	t := time.Now().Add(-time.Hour).Format("2006-01-02 15:04:05")
+	where := fmt.Sprintf(`page='%v' and date_added > '%v'`, exercise, t)
+	data := models.GetExercises(database, where, " order by id desc limit 1")
+	if len(data) > 0 {
+		return data[0]
+	}
+	return models.Exercise{}
 }
 
 func ExerciseStat(database *sqlx.DB) map[int]models.Exercise {
 	stat := map[int]models.Exercise{}
-	data := models.GetExercises(database)
+	data := models.GetExercises(database, "", " order by date_added desc")
 	for _, item := range data {
 		if stat[item.Page].Page > 0 {
 			continue

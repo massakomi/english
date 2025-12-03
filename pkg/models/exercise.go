@@ -9,7 +9,7 @@ import (
 )
 
 type Exercise struct {
-	id           int
+	Id           int
 	Page         int
 	DateAdded    time.Time
 	DateFinished time.Time
@@ -19,26 +19,29 @@ type Exercise struct {
 	Errors       int
 }
 
-func GetExercises(database *sqlx.DB) []Exercise {
-	data := GetExercisesBySql(database, `select * from english_exercise order by date_added desc`)
+func GetExercises(database *sqlx.DB, where string, order string) []Exercise {
+	s := `select * from english_exercise`
+	if where != "" {
+		s += " where " + where
+	}
+	s += order
+	data := GetExercisesBySql(database, s, func(rows *sql.Rows, p *Exercise) error {
+		return rows.Scan(&p.Id, &p.Page, &p.DateAdded, &p.DateFinished)
+	})
 	return data
 }
 
 // GetEnglishBookReadBySql Общая механика выборки из таблицы
-func GetExercisesBySql(database *sqlx.DB, sql string) []Exercise {
+func GetExercisesBySql(database *sqlx.DB, sql string, scanner func(rows *sql.Rows, p *Exercise) error) []Exercise {
 	rows, err := database.Query(sql)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
-	return scanExercises(rows)
-}
-
-func scanExercises(rows *sql.Rows) []Exercise {
 	var items []Exercise
 	for rows.Next() {
 		p := Exercise{}
-		err := rows.Scan(&p.id, &p.Page, &p.DateAdded, &p.DateFinished)
+		err := scanner(rows, &p)
 		if err != nil {
 			fmt.Println(err)
 			continue

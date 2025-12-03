@@ -1,12 +1,14 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"maps"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -73,4 +75,43 @@ func GetFirstVal(sql string, database *sqlx.DB) string {
 		log.Panicf("I don't know about type %T!\n", v)
 	}
 	return dt
+}
+
+func Exec(db *sqlx.DB, s string) sql.Result {
+	result, err := db.Exec(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//id, _ := result.LastInsertId()
+	//rows, _ := result.LastInsertId()
+	//fmt.Println(id, rows)
+	return result
+}
+
+func Insert(database *sqlx.DB, table string, values map[string]any) {
+	fields := []string{}
+	places := []string{}
+	vals := []any{}
+	i := 1
+	for field, value := range values {
+		fields = append(fields, field)
+		places = append(places, fmt.Sprintf(`$%v`, i))
+		vals = append(vals, value)
+		i++
+	}
+	s := fmt.Sprintf(`INSERT INTO %v (%v) VALUES (%v)`, table, strings.Join(fields, ","), strings.Join(places, ", "))
+	database.MustExec(s, vals...)
+}
+
+func Update(database *sqlx.DB, table string, pk int, values map[string]any) {
+	sets := []string{}
+	vals := []any{}
+	i := 1
+	for field, value := range values {
+		sets = append(sets, fmt.Sprintf(`%v=$%v`, field, i))
+		vals = append(vals, value)
+		i++
+	}
+	s := fmt.Sprintf(`UPDATE %v SET %v WHERE id=%v`, table, strings.Join(sets, ","), pk)
+	database.MustExec(s, vals...)
 }

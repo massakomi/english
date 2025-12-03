@@ -17,7 +17,17 @@ import (
 )
 
 func TestGo() {
-	TestGetExerciseQuestion()
+	TestUpdateExerciseIfStarted()
+}
+
+func TestUpdateExerciseIfStarted() {
+	database := db.Connect()
+	cmd.UpdateExerciseIfStarted(database, "2", true)
+}
+
+func TestGetExerciseStarted() {
+	database := db.Connect()
+	cmd.GetExerciseStarted(database, "2")
 }
 
 func TestGetExerciseQuestion() {

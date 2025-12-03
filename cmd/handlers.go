@@ -77,6 +77,16 @@ func exercisePage(context *gin.Context) {
 		"date":             time.Now().Format("15:04:05"),
 		"exerciseComment":  exerciseComment,
 		"data":             outputData,
+		"exerciseInfo":     GetExerciseStarted(database, index),
+	})
+}
+
+func exerciseStart(context *gin.Context) {
+	database := db.Connect()
+	index := context.Param("index")
+	UpdateExerciseIfStarted(database, index, true)
+	context.JSON(http.StatusOK, gin.H{
+		"status": index,
 	})
 }
 
