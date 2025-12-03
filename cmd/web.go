@@ -20,6 +20,7 @@ func Run() {
 	r.GET("/", home)
 	r.GET("/book", book)
 	r.GET("/exercise", exercise)
+	r.GET("/exercise/:index", exercisePage)
 	r.GET("/update-auto", updateAuto)
 
 	if err := r.Run(":8080"); err != nil {
@@ -48,6 +49,7 @@ func createMyRender() multitemplate.Renderer {
 		"public/exercise/exercise.html",
 		"public/exercise/exercise_scripts.html",
 		"public/exercise/exercise_table.html",
+		"public/exercise/questions.html",
 	)
 	return r
 }

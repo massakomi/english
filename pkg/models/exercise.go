@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"html/template"
 	"time"
 )
 
@@ -14,7 +15,7 @@ type Exercise struct {
 	DateFinished time.Time
 	DaysAgo      int
 	Time         float64
-	Style        string
+	Style        template.CSS
 	Errors       int
 }
 

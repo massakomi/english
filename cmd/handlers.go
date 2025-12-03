@@ -64,6 +64,22 @@ func exercise(context *gin.Context) {
 	})
 }
 
+func exercisePage(context *gin.Context) {
+	database := db.Connect()
+	books := models.GetBooks(database)
+	index := context.Param("index")
+	outputData, exerciseComment := GetDataForExercise(database, index)
+
+	context.HTML(http.StatusOK, "exercise", gin.H{
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
+		"exerciseIndex":    index,
+		"exerciseDbUrl":    `http://msc/index.php?db=tester&table=english_exercise_questions&s=tbl_data&where=exercise=` + index,
+		"date":             time.Now().Format("15:04:05"),
+		"exerciseComment":  exerciseComment,
+		"data":             outputData,
+	})
+}
+
 func updateAuto(context *gin.Context) {
 	database := db.Connect()
 	data := db.GetData(`select * from english_words where english_short_auto ='' or english_short_auto is null`, database)

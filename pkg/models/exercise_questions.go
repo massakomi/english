@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"time"
 )
 
 type ExerciseQuestion struct {
@@ -12,31 +11,38 @@ type ExerciseQuestion struct {
 	Exercise  int
 	Question  string
 	Errors    int
-	DateAdded time.Time
-	Comment   string
-	Time      int
+	DateAdded string
+	Comment   sql.NullString
+	Time      sql.NullInt64
 }
 
 func GetExerciseQuestions(database *sqlx.DB) []ExerciseQuestion {
-	data := GetExerciseQuestionsBySql(database, `select exercise, question, errors from english_exercise_questions order by date_added desc`)
+	s := `select exercise, question, errors from english_exercise_questions order by date_added desc`
+	data := GetExerciseQuestionsBySql(database, s, func(rows *sql.Rows, p *ExerciseQuestion) error {
+		return rows.Scan(&p.Exercise, &p.Question, &p.Errors)
+	})
+	return data
+}
+
+func GetExerciseQuestionsByWhere(database *sqlx.DB, where string) []ExerciseQuestion {
+	s := fmt.Sprintf(`select * from english_exercise_questions where %v order by date_added desc`, where)
+	data := GetExerciseQuestionsBySql(database, s, func(rows *sql.Rows, p *ExerciseQuestion) error {
+		return rows.Scan(&p.id, &p.Exercise, &p.Question, &p.Errors, &p.DateAdded, &p.Comment, &p.Time)
+	})
 	return data
 }
 
 // GetEnglishBookReadBySql Общая механика выборки из таблицы
-func GetExerciseQuestionsBySql(database *sqlx.DB, sql string) []ExerciseQuestion {
+func GetExerciseQuestionsBySql(database *sqlx.DB, sql string, scanner func(rows *sql.Rows, p *ExerciseQuestion) error) []ExerciseQuestion {
 	rows, err := database.Query(sql)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
-	return scanExerciseQuestions(rows)
-}
-
-func scanExerciseQuestions(rows *sql.Rows) []ExerciseQuestion {
 	var items []ExerciseQuestion
 	for rows.Next() {
 		p := ExerciseQuestion{}
-		err := rows.Scan(&p.Exercise, &p.Question, &p.Errors)
+		err := scanner(rows, &p)
 		if err != nil {
 			fmt.Println(err)
 			continue

@@ -37,6 +37,11 @@ func PregMatchAllEx(pattern string, text string) [][]string {
 	return re.FindAllStringSubmatch(text, -1)
 }
 
+func Match(pattern string, text string) bool {
+	re := regexp.MustCompile(pattern)
+	return re.MatchString(text)
+}
+
 func PregMatch(pattern string, text string) string {
 	re := regexp.MustCompile(pattern)
 	return re.FindString(text)

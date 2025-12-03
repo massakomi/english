@@ -5,6 +5,7 @@ import (
 	"english/pkg/utils"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"html/template"
 	"log"
 	"math"
 	"os"
@@ -40,9 +41,6 @@ func ExerciseStat(database *sqlx.DB) map[int]models.Exercise {
 		stat[item.Page] = item
 	}
 	return stat
-}
-
-func getStartButton() {
 }
 
 func getExercisesQuestionsStat(database *sqlx.DB) map[int][]int {
@@ -98,22 +96,90 @@ func GetExerciseStatStyle(database *sqlx.DB, index int) models.Exercise {
 		} else {
 			style += `color:#ccc; `
 		}
-		statItem.Style = fmt.Sprintf(` style="%s"`, style)
+		statItem.Style = template.CSS(style)
 		statItem.Errors = totalErrors[index]["errors"]
 	}
 	return statItem
 }
 
-func formatOffset() {
+func formatOffset(offsetSeconds float64) string {
+	offsetInfo := ""
+	offset := utils.RoundFloat(offsetSeconds/86400, 1)
+	if offsetSeconds > 86400 {
+		offsetInfo = fmt.Sprintf("%v days", offset)
+	} else if offsetSeconds > 3600 {
+		offset = utils.RoundFloat(offsetSeconds/3600, 1)
+		offsetInfo = fmt.Sprintf("%v hours", offset)
+	} else {
+		offset = utils.RoundFloat(offsetSeconds/60, 1)
+		offsetInfo = fmt.Sprintf("%v mins", offset)
+	}
+	return offsetInfo
 }
 
-func getExerciseQuestion() {
+func GetExerciseQuestion(database *sqlx.DB, exercise string, last bool) map[int]map[string]map[string]any {
+	questions := make(map[int]map[string]map[string]any)
+	data := models.GetExerciseQuestionsByWhere(database, "exercise="+exercise)
+	for _, item := range data {
+		tm, _ := time.Parse("2006-01-02 15:04:05", item.DateAdded)
+		dmy := tm.Format("2006-01-02")
+		offsetSeconds := time.Now().Sub(tm).Seconds()
+		offsetDays := int(math.Floor(offsetSeconds / 86400))
+		offsetInfo := formatOffset(offsetSeconds)
+		row := map[string]any{
+			"errors":      item.Errors,
+			"time":        "",
+			"offset":      offsetDays,
+			"offset-info": offsetInfo,
+		}
+		if item.Time.Valid {
+			row["time"] = fmt.Sprintf(`%vs`, item.Time.Int64)
+		}
+		question, _ := strconv.Atoi(item.Question)
+		if last {
+			if questions[question] != nil {
+				continue
+			}
+		}
+		if questions[question] == nil {
+			questions[question] = make(map[string]map[string]any)
+		}
+		questions[question][dmy] = row
+	}
+	return questions
 }
 
-func getExerciseQuestionLast() {
+func GetExerciseQuestionLast(database *sqlx.DB, exercise string) map[int]map[string]any {
+	outputData := GetExerciseQuestion(database, exercise, true)
+	questions := make(map[int]map[string]any)
+	for question, values := range outputData {
+		for _, valuesInner := range values {
+			questions[question] = valuesInner
+		}
+	}
+	return questions
 }
 
-func exerciseQuestionStat() {
+var exerciseStat map[int]map[string]map[string]any
+
+func exerciseQuestionStat(database *sqlx.DB, exercise string, index int) string {
+	if exerciseStat == nil {
+		exerciseStat = GetExerciseQuestion(database, exercise, false)
+	}
+	add := ""
+	if exerciseStat[index] != nil {
+		qs := []string{}
+		for _, item := range exerciseStat[index] {
+			e := fmt.Sprintf(`<span style="color:red">%v errors</span>`, item["errors"])
+			if item["time"] != " " {
+				e = fmt.Sprintf(`%v `, item["time"]) + e
+			}
+			qs = append(qs, e)
+		}
+		slices.Reverse(qs)
+		add = fmt.Sprintf(` <span style="font-size:11px; color:green">%v</span>`, strings.Join(qs, " / "))
+	}
+	return add
 }
 
 func getAllExercises() [][]string {

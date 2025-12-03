@@ -17,7 +17,28 @@ import (
 )
 
 func TestGo() {
-	TestGetDataForList()
+	TestGetExerciseQuestion()
+}
+
+func TestGetExerciseQuestion() {
+	database := db.Connect()
+	//outputData := models.GetExerciseQuestions(database)
+	outputData := cmd.GetExerciseQuestionLast(database, "1")
+	pretty.PrettyPrint(outputData)
+}
+
+func TestGetExerciseQuestionsByWhere() {
+	database := db.Connect()
+	//outputData := models.GetExerciseQuestions(database)
+	outputData := models.GetExerciseQuestionsByWhere(database, "exercise=36")
+	pretty.PrettyPrint(outputData)
+}
+
+func TestGetDataForExercise() {
+	database := db.Connect()
+	outputData, exerciseComment := cmd.GetDataForExercise(database, "1")
+	pretty.PrettyPrint(outputData)
+	fmt.Println(exerciseComment)
 }
 
 func TestTest() {

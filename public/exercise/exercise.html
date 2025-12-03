@@ -3,10 +3,23 @@
 {{define "title"}}Упражнения{{end}}
 
 {{define "main"}}
+    <!-- общий css для всего -->
+    <style>
+        .q-block {}
+        .a {font-size:12px; margin:5px 0 5px;}
+        .b {font-size:12px; margin:0 0 5px; color:green; display:none;}
+        .a .errors {color:red; font-size:11px;}
+        .q-info {font-size: 10px; padding: 0; width: 50px; border: 1px solid #ccc;}
+        .q-block:not(.active) .q-info {display:none;}
+        .q-info:focus {width:300px;}
+    </style>
 
+    {{if .exerciseIndex}}
+        {{template "questions.html" .}}
+    {{else}}
+        {{template "exercise_table.html" .}}
+    {{end}}
 
-
-    {{template "exercise_table.html" .}}
     {{template "exercise_scripts.html" .}}
 
 {{end}}

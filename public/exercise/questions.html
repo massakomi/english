@@ -1,0 +1,55 @@
+<h2>Exercise <a href="{{.exerciseDbUrl}}" target="_blank">{{.exerciseIndex}}</a>
+    <span style="font-size:14px; font-weight:normal;">- {{.date}} (total {{len .data}})</span>
+    <input type="button" class="btn btn-primary exercise-start" value="--">
+    <span style="font-size:14px; font-weight:normal;" class="exercise-started d-none">упражнение начато!</span>
+</h2>
+{{if .exerciseComment }}
+    <div style="font-size:12px;">{{.exerciseComment}}</div>
+{{end}}
+
+{{ range $key, $element := .data }}
+<div class="q-block d-flex flex-column">
+    <input type="text" tabindex="{{$key}}" name="eng-check" value="" data-index="{{.index}}" class="form-control order-2" data-errors-old="{{.errors}}" />
+    <div class="a order-1">
+      {{.russian}}
+      <a target="_blank" href="{{.url}}" style="color:#ccc; font-size:12px;">{{.index}}</a>
+      <input tabindex="999" type="text" class="q-info" />
+      {{.add}}
+      <span style="color:#ccc">-</span>
+      <span class="errors"></span>
+      <span class="time" style="font-size:11px; color:green"></span>
+    </div>
+    {{if .eng}}
+    <div class="b eng-text order-3">{{.eng}}</div>
+    {{else}}
+    <span style="color:red">empty ENG</span>
+    {{end}}
+</div>
+{{ end }}
+
+<br /><br /><br />
+
+<script type="text/javascript">
+  $(document).ready(function(){
+    var hideAfterStart = false; //<?=(int)$hideAfterStart?>;
+    var exerficeExists = false; //<?=(int)(bool)$exerciseInfo?>;
+    if (!exerficeExists || hideAfterStart) {
+      $('.exercise-start').val('Начать {{.exerciseIndex}}')
+    } else {
+      $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
+    }
+    $('.exercise-start').click(function() {
+      $.get('?page=exercise&action=start_exercise&exercise={{.exerciseIndex}}', function(data) {
+        if (data) {
+          alert(data);
+        } else {
+          if (hideAfterStart) {
+            $('.exercise-start').remove()
+          } else {
+            $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
+          }
+        }
+      });
+    })
+  });
+</script>

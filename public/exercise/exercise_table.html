@@ -1,15 +1,3 @@
-<!-- общий ксс для всего -->
-<style>
-  .q-block {}
-  .a {font-size:12px; margin:5px 0 5px;}
-  .b {font-size:12px; margin:0 0 5px; color:green; display:none;}
-  .a .errors {color:red; font-size:11px;}
-  .q-info {font-size: 10px; padding: 0; width: 50px; border: 1px solid #ccc;}
-  .q-block:not(.active) .q-info {display:none;}
-  .q-info:focus {width:300px;}
-</style>
-
-
 <!-- список упражнений -->
 <style>
   .exercise-menu {font-size:12px;}
@@ -22,7 +10,7 @@
 <table class="table small exercise-menu">
   {{ range .data }}
   <tr>
-    <td><a href="?page=exercise&index={{.index}}" {{ .style | attr }} title="{{.time}}">{{.index}}</a></td>
+    <td><a href="/exercise/{{.index}}" style="{{.style}}" title="{{.time}}">{{.index}}</a></td>
     <td>{{.line}} ({{.count}})</td>
     <td><span style="font-size:10px; color:#acc" title="{{.dateAdded}}">{{.dateText}}</span></td>
     <td title="Время выполнения в минутах">{{.time}}</td>
