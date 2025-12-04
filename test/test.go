@@ -17,7 +17,7 @@ import (
 )
 
 func TestGo() {
-	TestUpdateExerciseIfStarted()
+	TestGetExerciseStarted()
 }
 
 func TestUpdateExerciseIfStarted() {
@@ -27,7 +27,8 @@ func TestUpdateExerciseIfStarted() {
 
 func TestGetExerciseStarted() {
 	database := db.Connect()
-	cmd.GetExerciseStarted(database, "2")
+	data := cmd.GetExerciseStarted(database, "2")
+	pretty.PrettyPrint(data)
 }
 
 func TestGetExerciseQuestion() {

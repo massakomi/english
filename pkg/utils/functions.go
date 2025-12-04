@@ -93,7 +93,7 @@ func MapKeySortByValues[T int | int64](stat map[string]T, desc bool) []string {
 	return keys
 }
 
-func ScanFile(filename string, callback func(string)) {
+func ScanFile(filename string, callback func(string, int)) {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -101,8 +101,10 @@ func ScanFile(filename string, callback func(string)) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	index := 0
 	for scanner.Scan() {
-		callback(scanner.Text())
+		callback(scanner.Text(), index)
+		index++
 	}
 
 	if err := scanner.Err(); err != nil {

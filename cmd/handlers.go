@@ -85,9 +85,46 @@ func exerciseStart(context *gin.Context) {
 	database := db.Connect()
 	index := context.Param("index")
 	UpdateExerciseIfStarted(database, index, true)
-	context.JSON(http.StatusOK, gin.H{
-		"status": index,
-	})
+	context.String(http.StatusOK, "")
+}
+
+func exerciseRegister(context *gin.Context) {
+	exercise := context.Param("index")
+	tm := context.Query("time")
+	question := context.Query("index")
+	errors := context.Query("errors")
+	comment := context.Query("comment")
+	if exercise == "" || question == "" || question == "undefined" {
+		context.String(http.StatusBadRequest, "")
+	}
+	database := db.Connect()
+	now := time.Now().Add(-time.Hour).Format("2006-01-02 15:04:05")
+	where := fmt.Sprintf(`exercise=%v AND question='%v' AND date_added > '%v'`, exercise, question, now)
+	item := models.GetExerciseQuestionsByWhere(database, where)
+
+	data := make(map[string]any)
+	data["date_added"] = time.Now().Format("2006-01-02 15:04:05")
+	if utils.IsNumeric(errors) {
+		data["errors"] = errors
+	}
+	if comment != "" {
+		data["comment"] = comment
+	}
+	if tm != "" {
+		data["time"] = tm
+	}
+
+	if len(item) > 0 {
+		db.Update(database, "english_exercise_questions", item[0].Id, data)
+	} else {
+		data["exercise"] = exercise
+		data["question"] = question
+		db.Insert(database, "english_exercise_questions", data)
+	}
+
+	UpdateExerciseIfStarted(database, exercise, true)
+
+	context.String(http.StatusOK, "ok")
 }
 
 func updateAuto(context *gin.Context) {

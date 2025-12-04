@@ -143,8 +143,8 @@ func formatOffset(offsetSeconds float64) string {
 	return offsetInfo
 }
 
-func GetExerciseQuestion(database *sqlx.DB, exercise string, last bool) map[int]map[string]map[string]any {
-	questions := make(map[int]map[string]map[string]any)
+func GetExerciseQuestion(database *sqlx.DB, exercise string, last bool) map[string]map[string]map[string]any {
+	questions := make(map[string]map[string]map[string]any)
 	data := models.GetExerciseQuestionsByWhere(database, "exercise="+exercise)
 	for _, item := range data {
 		tm, _ := time.Parse("2006-01-02 15:04:05", item.DateAdded)
@@ -161,7 +161,7 @@ func GetExerciseQuestion(database *sqlx.DB, exercise string, last bool) map[int]
 		if item.Time.Valid {
 			row["time"] = fmt.Sprintf(`%vs`, item.Time.Int64)
 		}
-		question, _ := strconv.Atoi(item.Question)
+		question := item.Question
 		if last {
 			if questions[question] != nil {
 				continue
@@ -175,9 +175,9 @@ func GetExerciseQuestion(database *sqlx.DB, exercise string, last bool) map[int]
 	return questions
 }
 
-func GetExerciseQuestionLast(database *sqlx.DB, exercise string) map[int]map[string]any {
+func GetExerciseQuestionLast(database *sqlx.DB, exercise string) map[string]map[string]any {
 	outputData := GetExerciseQuestion(database, exercise, true)
-	questions := make(map[int]map[string]any)
+	questions := make(map[string]map[string]any)
 	for question, values := range outputData {
 		for _, valuesInner := range values {
 			questions[question] = valuesInner
@@ -186,16 +186,17 @@ func GetExerciseQuestionLast(database *sqlx.DB, exercise string) map[int]map[str
 	return questions
 }
 
-var exerciseStat map[int]map[string]map[string]any
+var exerciseStat map[string]map[string]map[string]any
 
 func exerciseQuestionStat(database *sqlx.DB, exercise string, index int) string {
 	if exerciseStat == nil {
 		exerciseStat = GetExerciseQuestion(database, exercise, false)
 	}
+	indexStr := strconv.FormatInt(int64(index), 10)
 	add := ""
-	if exerciseStat[index] != nil {
+	if exerciseStat[indexStr] != nil {
 		qs := []string{}
-		for _, item := range exerciseStat[index] {
+		for _, item := range exerciseStat[indexStr] {
 			e := fmt.Sprintf(`<span style="color:red">%v errors</span>`, item["errors"])
 			if item["time"] != " " {
 				e = fmt.Sprintf(`%v `, item["time"]) + e
@@ -267,7 +268,7 @@ func GetAllSentences() map[string]int {
 
 func getAllSentencedByIndex() []string {
 	byIndex := []string{}
-	utils.ScanFile("data/exercise-titles.txt", func(line string) {
+	utils.ScanFile("data/exercise-titles.txt", func(line string, key int) {
 		line = utils.PregReplace(line, `^(\d+)`, "")
 		byIndex = append(byIndex, strings.TrimSpace(line))
 	})

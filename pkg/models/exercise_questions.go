@@ -7,7 +7,7 @@ import (
 )
 
 type ExerciseQuestion struct {
-	id        int
+	Id        int
 	Exercise  int
 	Question  string
 	Errors    int
@@ -27,7 +27,7 @@ func GetExerciseQuestions(database *sqlx.DB) []ExerciseQuestion {
 func GetExerciseQuestionsByWhere(database *sqlx.DB, where string) []ExerciseQuestion {
 	s := fmt.Sprintf(`select * from english_exercise_questions where %v order by date_added desc`, where)
 	data := GetExerciseQuestionsBySql(database, s, func(rows *sql.Rows, p *ExerciseQuestion) error {
-		return rows.Scan(&p.id, &p.Exercise, &p.Question, &p.Errors, &p.DateAdded, &p.Comment, &p.Time)
+		return rows.Scan(&p.Id, &p.Exercise, &p.Question, &p.Errors, &p.DateAdded, &p.Comment, &p.Time)
 	})
 	return data
 }

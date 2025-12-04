@@ -43,8 +43,7 @@
     }
     function registerExercise(index, errors, comment='', time='')
     {
-      const getIndex = new URLSearchParams(window.location.search).get('index');
-      $.get('?page=exercise&action=register_exercise&exercise='+getIndex+'&index='+index+'&errors='+errors+'&time='+time+'&comment='+encodeURIComponent(comment), function(data) {
+      $.get('/exercise/register/{{.exerciseIndex}}?index='+index+'&errors='+errors+'&time='+time+'&comment='+encodeURIComponent(comment), function(data) {
       console.log(data)
     });
     }

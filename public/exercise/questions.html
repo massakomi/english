@@ -1,5 +1,5 @@
 <h2>Exercise <a href="{{.exerciseDbUrl}}" target="_blank">{{.exerciseIndex}}</a>
-    <span style="font-size:14px; font-weight:normal;">- {{.date}} (total {{len .data}})</span>
+    <span style="font-size:14px; font-weight:normal;">{{.date}} (total {{len .data}})</span>
     <input type="button" class="btn btn-primary exercise-start" value="--">
     <span style="font-size:14px; font-weight:normal;" class="exercise-started d-none">упражнение начато!</span>
 </h2>
@@ -34,10 +34,15 @@
   $(document).ready(function(){
     var hideAfterStart = true;
     var exerficeExists = {{.exerciseInfo.Page}}
-    if (!exerficeExists || hideAfterStart) {
-      $('.exercise-start').val('Начать {{.exerciseIndex}}')
+    if (!exerficeExists) {
+        $('.exercise-start').val('Начать {{.exerciseIndex}}')
     } else {
-      $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
+        if (hideAfterStart) {
+            $('.exercise-started').removeClass('d-none')
+            $('.exercise-start').addClass('d-none')
+        } else {
+            $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
+        }
     }
     $('.exercise-start').click(function() {
       $.get('/exercise/start/{{.exerciseIndex}}', function(data) {
