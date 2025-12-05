@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"english/pkg/db"
+	"english/pkg/models"
 	"english/pkg/utils"
 	"fmt"
 	_ "fmt"
@@ -10,6 +12,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func GetDataForExercise(database *sqlx.DB, exerciseIndex string) ([]map[string]any, string) {
@@ -139,4 +142,32 @@ func getExerciseComment(content string) string {
 		exerciseComment = sents[i-1]
 	}
 	return exerciseComment
+}
+
+func ExerciseAddOrUpdate(database *sqlx.DB, exercise string, tm string, question string, errors string, comment string) {
+	now := time.Now().Add(-time.Hour).Format("2006-01-02 15:04:05")
+	where := fmt.Sprintf(`exercise=%v AND question='%v' AND date_added > '%v'`, exercise, question, now)
+	item := models.GetExerciseQuestionsByWhere(database, where)
+
+	data := make(map[string]any)
+	data["date_added"] = time.Now().Format("2006-01-02 15:04:05")
+	if utils.IsNumeric(errors) {
+		data["errors"] = errors
+	}
+	if comment != "" {
+		data["comment"] = comment
+	}
+	if tm != "" {
+		data["time"] = tm
+	}
+
+	if len(item) > 0 {
+		db.Update(database, "english_exercise_questions", item[0].Id, data)
+	} else {
+		data["exercise"] = exercise
+		data["question"] = question
+		db.Insert(database, "english_exercise_questions", data)
+	}
+
+	UpdateExerciseIfStarted(database, exercise, true)
 }

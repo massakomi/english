@@ -1,0 +1,176 @@
+<style>
+    .articles {margin-bottom:200px}
+    .articles b {display:none; ;}
+    /*.articles p:hover b {display:inline;}*/
+    .articles .hidden {display:none;}
+    .articles span.ok {color:green; font-weight:bold;}
+    .articles span.error {color:red}
+    .predlog {color:red; font-weight:bold;}
+    .predlog i {font-style:normal}
+    .predlog s {text-decoration:none; color:#aaa; font-size:10px;}
+</style>
+
+<div style="margin-bottom:10px; margin-top:100px;">
+    [<span id="articles-total">{{.selected}}</span>/{{.counts}}]
+    <button class="next-btn btn btn-primary btn-sm" disabled>next</button>
+    <button class="show-btn btn btn-warning btn-sm">show</button>
+    &nbsp;
+    <span id="articles-errors" class="badge rounded-pill bg-danger">0</span>
+    &nbsp;
+    <span id="articles-success" class="badge rounded-pill bg-success">0</span>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="#" style="color:#ccc" onclick="cook.set('article-next-page', 1, 1, '/'); location.reload(); return false;">начать с начала</a>
+    &nbsp;&nbsp;&nbsp;
+    <span style="color:#aaa; font-size:11px;">{{.date}}</span>
+    <input type="button" class="btn btn-primary exercise-start" value="--">
+    <span style="font-size:14px; font-weight:normal;" class="exercise-started d-none">упражнение начато!</span>
+</div>
+
+<div class="articles">
+    articles
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+
+        function checkEmptySpansAndOpenNextPage()
+        {
+            console.log('checkEmptySpansAndOpenNextPage')
+            // Если в текущем предложении нет никаких SPAN элементов, которые нужно найти - открываем следующее предложение
+            if (articlesMode) {
+                checkOnArticles()
+            } else {
+                if (!$('.articles p:not(.hidden) span.predlog').length) {
+                    console.log('articlesMode no')
+                    $('.next-btn').attr('disabled', false)
+                }
+            }
+        }
+
+        function checkOnArticles() {
+            // Сколько 1) спанов и сколько 2) the-спанов осталось. Если ничего - предлагаем следующее предложение
+            let spans = $('.articles p:not(.hidden) span:not([class])').length;
+            let thes = $('.articles p:not(.hidden) span.the').length;
+            document.title = `English [${spans}]`
+            console.log('spans='+spans+' thes='+thes+'')
+            if (!spans && !thes) {
+                $('.next-btn').attr('disabled', false)
+                $('.show-btn').click().hide()
+                console.log('checkEmptySpansAndOpenNextPage, no hidden spans')
+                let timeout = Math.ceil($('.articles p:not(.hidden)').text().length / 5)
+                $('.next-btn').html('next '+timeout)
+                /*setTimeout(function() {
+                    $('.next-btn').click()
+                }, 2000);*/
+            }
+
+
+            // Сколько 1) спанов и сколько 2) the-спанов осталось. Если ничего - предлагаем следующее предложение
+            /*let spans = $('.articles p:not(.hidden) span:not([class])').length;
+            let thes = $('.articles p:not(.hidden) span.the').length;
+            document.title = `English [${spans+thes}]`
+            console.log('spans='+spans+' thes='+thes+'')
+            if (!spans && !thes) {
+              $('.next-btn').attr('disabled', false)
+              $('.show-btn').click().hide()
+              console.log('no spans no thes')
+            }*/
+        }
+
+        let articlesMode = {{js .articlesMode}};
+
+        // Проверка артиклей при клике на SPAN. В dataset.title хранится правильный артикль.
+        $('.articles span:not([class])').on('click contextmenu', function(e) {
+            e.preventDefault()
+            if (!$('.next-btn').prop('disabled')) {
+                return ;
+            }
+            if (this.dataset.title) {
+                // При втором клике (если уже есть класс ok) - если артикль не THE +ошибка -success
+                if ($(this).hasClass('ok') || e.type === 'contextmenu') {
+                    $(this).prev().show()
+                    $(this).removeClass('the')
+                    if (this.dataset.title.toLowerCase() !== 'the') {
+                        $(this).addClass('error')
+                        $('#articles-errors').html(parseInt($('#articles-errors').html()) + 1)
+                        $('#articles-success').html(parseInt($('#articles-success').html()) - 1)
+                    } else if (e.type === 'contextmenu') {
+                        $(this).addClass('ok')
+                        $('#articles-success').html(parseInt($('#articles-success').html()) + 1)
+                    }
+                    // При первом клике (есть хоть какой-то артикль) +success всегда
+                } else {
+                    $(this).addClass('ok')
+                    if (this.dataset.title.toLowerCase() === 'the') {
+                        $(this).addClass('the')
+                    }
+                    $('#articles-success').html(parseInt($('#articles-success').html()) + 1)
+                }
+            }
+            checkOnArticles()
+        })
+
+        // Инкрементация количества ошибок при клике по НЕ-SPAN элементу (значит ошибка)
+        $('.articles p').on('click contextmenu', function(e) {
+            if (!$('.next-btn').prop('disabled')) {
+                return ;
+            }
+            if (e.target.tagName === 'P') {
+                console.log('p')
+                $('#articles-errors').html(parseInt($('#articles-errors').html()) + 1)
+            }
+        })
+
+        // Следующее предложение, инкрементация счетчика предложений
+        $('.next-btn').click(function(e) {
+            $(this).html('next')
+            $('.show-btn').show()
+            $('.next-btn').attr('disabled', true)
+            var nextPage = parseInt($('#articles-total').html()) + 1;
+            $('#articles-total').html(nextPage)
+            cook.set('article-next-page', nextPage, 30, '/')
+            e.preventDefault()
+            var p = $('.articles p:not(.hidden)')
+            $(p).next().removeClass('hidden')
+            $(p).addClass('hidden')
+            if ($(p).next().is(':last-of-type')) {
+                $('.next-btn').hide()
+                cook.set('article-next-page', 1, 1, '/')
+            } else {
+                checkEmptySpansAndOpenNextPage()
+            }
+        })
+
+        // Раскрыть все B элементы, показать всё
+        $('.show-btn').click(function(e) {
+            e.preventDefault()
+            $('.next-btn').attr('disabled', false)
+            console.log(`остаток ${$('.articles p:not(.hidden) b:hidden').length}`)
+            var p = $('.articles p:not(.hidden) b').show()
+        })
+
+        checkEmptySpansAndOpenNextPage()
+
+        // Предлоги
+        $('.predlog i').click(function(e) {
+            //console.log('i')
+            let predlogValid = this.parentNode.dataset.title.toLowerCase();
+            let predlogValue = this.innerText;
+            //console.log(predlogValid)
+            //console.log(predlogValue)
+            if (predlogValid === predlogValue) {
+                $('#articles-success').html(parseInt($('#articles-success').html()) + 1)
+                $(this).parent().html(predlogValue)
+                let predlogs = $('.articles p:not(.hidden) i').length;
+                if (!predlogs) {
+                    $('.next-btn').attr('disabled', false)
+                }
+            } else {
+                //if (!this.parentNode.errorsSetted) {
+                $('#articles-errors').html(parseInt($('#articles-errors').html()) + 1)
+                //this.parentNode.errorsSetted = 1;
+                //}
+            }
+        })
+    });
+</script>

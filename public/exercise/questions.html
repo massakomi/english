@@ -1,10 +1,12 @@
-<h2>Exercise <a href="{{.exerciseDbUrl}}" target="_blank">{{.exerciseIndex}}</a>
-    <span style="font-size:14px; font-weight:normal;">{{.date}} (total {{len .data}})</span>
-    <input type="button" class="btn btn-primary exercise-start" value="--">
-    <span style="font-size:14px; font-weight:normal;" class="exercise-started d-none">упражнение начато!</span>
-</h2>
-{{if .exerciseComment }}
+{{if .exerciseDbUrl}}
+    <h2>Exercise <a href="{{.exerciseDbUrl}}" target="_blank">{{.exerciseIndex}}</a>
+        <span style="font-size:14px; font-weight:normal;">{{.date}} (total {{len .data}})</span>
+        <input type="button" class="btn btn-primary exercise-start" value="--">
+        <span style="font-size:14px; font-weight:normal;" class="exercise-started d-none">упражнение начато!</span>
+    </h2>
+    {{if .exerciseComment }}
     <div style="font-size:12px;">{{.exerciseComment}}</div>
+    {{end}}
 {{end}}
 
 {{ range $key, $element := .data }}
@@ -32,30 +34,30 @@
 
 <script type="text/javascript">
   $(document).ready(function(){
-    var hideAfterStart = true;
-    var exerficeExists = {{.exerciseInfo.Page}}
-    if (!exerficeExists) {
-        $('.exercise-start').val('Начать {{.exerciseIndex}}')
-    } else {
-        if (hideAfterStart) {
-            $('.exercise-started').removeClass('d-none')
-            $('.exercise-start').addClass('d-none')
-        } else {
-            $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
-        }
-    }
-    $('.exercise-start').click(function() {
-      $.get('/exercise/start/{{.exerciseIndex}}', function(data) {
-        if (data) {
-          alert(data);
-        } else {
+      const hideAfterStart = {{.hideAfterStart}}
+      const exerficeExists = {{.exerciseInfo.Page}}
+      if (!exerficeExists) {
+          $('.exercise-start').val('Начать {{.exerciseIndex}}')
+      } else {
           if (hideAfterStart) {
-            $('.exercise-start').remove()
+              $('.exercise-started').removeClass('d-none')
+              $('.exercise-start').addClass('d-none')
           } else {
-            $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
+              $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
           }
-        }
-      });
-    })
+      }
+      $('.exercise-start').click(function() {
+          $.get('/exercise/start/{{.exerciseIndex}}', function(data) {
+              if (data) {
+                  alert(data);
+              } else {
+                  if (hideAfterStart) {
+                      $('.exercise-start').remove()
+                  } else {
+                      $('.exercise-start').val('Обновить {{.exerciseIndex}}').addClass('btn-warning')
+                  }
+              }
+          });
+      })
   });
 </script>

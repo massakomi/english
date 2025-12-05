@@ -17,7 +17,12 @@ import (
 )
 
 func TestGo() {
-	TestGetExerciseStarted()
+	TestGetDataForArticles()
+}
+
+func TestGetDataForArticles() {
+	//database := db.Connect()
+	cmd.GetDataForArticles(true)
 }
 
 func TestUpdateExerciseIfStarted() {

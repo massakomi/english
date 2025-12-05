@@ -78,6 +78,7 @@ func exercisePage(context *gin.Context) {
 		"exerciseComment":  exerciseComment,
 		"data":             outputData,
 		"exerciseInfo":     GetExerciseStarted(database, index),
+		"hideAfterStart":   "true",
 	})
 }
 
@@ -90,7 +91,7 @@ func exerciseStart(context *gin.Context) {
 
 func exerciseRegister(context *gin.Context) {
 	exercise := context.Param("index")
-	tm := context.Query("time")
+	time := context.Query("time")
 	question := context.Query("index")
 	errors := context.Query("errors")
 	comment := context.Query("comment")
@@ -98,33 +99,43 @@ func exerciseRegister(context *gin.Context) {
 		context.String(http.StatusBadRequest, "")
 	}
 	database := db.Connect()
-	now := time.Now().Add(-time.Hour).Format("2006-01-02 15:04:05")
-	where := fmt.Sprintf(`exercise=%v AND question='%v' AND date_added > '%v'`, exercise, question, now)
-	item := models.GetExerciseQuestionsByWhere(database, where)
-
-	data := make(map[string]any)
-	data["date_added"] = time.Now().Format("2006-01-02 15:04:05")
-	if utils.IsNumeric(errors) {
-		data["errors"] = errors
-	}
-	if comment != "" {
-		data["comment"] = comment
-	}
-	if tm != "" {
-		data["time"] = tm
-	}
-
-	if len(item) > 0 {
-		db.Update(database, "english_exercise_questions", item[0].Id, data)
-	} else {
-		data["exercise"] = exercise
-		data["question"] = question
-		db.Insert(database, "english_exercise_questions", data)
-	}
-
-	UpdateExerciseIfStarted(database, exercise, true)
-
+	ExerciseAddOrUpdate(database, exercise, time, question, errors, comment)
 	context.String(http.StatusOK, "ok")
+}
+
+func exerciseArticles(context *gin.Context) {
+	database := db.Connect()
+	books := models.GetBooks(database)
+
+	selected, _ := context.Cookie("article-next-page")
+	if selected == "" {
+		selected = "1"
+	}
+
+	counts := 0
+
+	context.HTML(http.StatusOK, "exercise", gin.H{
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
+		"exerciseIndex":    "articles",
+		"exerciseInfo":     GetExerciseStarted(database, "articles"),
+		"date":             time.Now().Format("15:04:05"),
+		"hideAfterStart":   "false",
+		"selected":         selected,
+		"counts":           counts,
+		"articlesMode":     true,
+	})
+}
+
+func exercisePrepositions(context *gin.Context) {
+	database := db.Connect()
+	books := models.GetBooks(database)
+
+	context.HTML(http.StatusOK, "exercise", gin.H{
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
+		"exerciseIndex":    "predlogs",
+		"exerciseInfo":     GetExerciseStarted(database, "predlogs"),
+		"date":             time.Now().Format("15:04:05"),
+	})
 }
 
 func updateAuto(context *gin.Context) {

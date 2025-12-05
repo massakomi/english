@@ -26,6 +26,11 @@ func PregReplace(content string, pattern string, replacement string) string {
 	return regex.ReplaceAllString(content, replacement)
 }
 
+func PregReplaceCallback(content string, pattern string, callback func(string) string) string {
+	re := regexp.MustCompile(pattern)
+	return re.ReplaceAllStringFunc(content, callback)
+}
+
 func PregMatchAll(pattern string, text string) []string {
 	re := regexp.MustCompile(pattern)
 	return re.FindAllString(text, -1)

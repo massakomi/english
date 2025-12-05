@@ -15,6 +15,9 @@
     </style>
 
     {{if .exerciseIndex}}
+        {{if .articlesMode }}
+            {{template "articles.html" .}}
+        {{end}}
         {{template "questions.html" .}}
     {{else}}
         {{template "exercise_table.html" .}}

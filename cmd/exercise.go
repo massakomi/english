@@ -45,6 +45,9 @@ func UpdateExerciseIfStarted(database *sqlx.DB, exercise string, add bool) {
 
 func GetExerciseStarted(database *sqlx.DB, exercise string) models.Exercise {
 	t := time.Now().Add(-time.Hour).Format("2006-01-02 15:04:05")
+	if exercise == "articles" || exercise == "predlogs" {
+		exercise = "9999"
+	}
 	where := fmt.Sprintf(`page='%v' and date_added > '%v'`, exercise, t)
 	data := models.GetExercises(database, where, " order by id desc limit 1")
 	if len(data) > 0 {
