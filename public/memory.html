@@ -1,0 +1,142 @@
+{{template "index.html" .}}
+
+{{define "title"}}Слова{{end}}
+
+{{define "main"}}
+
+<table class="table small">
+    {{ range .data }}
+    <tr data-id="{{.id}}" {{.add}}>
+        <td class="reset-timer">
+            {{if gt .remindOffset 0}}
+                {{.remindOffset}}
+            {{else}}
+                <span class="btn btn-primary btn-sm btn-r">5</span>
+                <span class="btn btn-warning btn-sm btn-r">2</span>
+                <span class="btn btn-danger btn-sm btn-r">0</span>
+            {{end}}
+        </td>
+        <td class="content">
+            <span class="word">{{.word}}</span>
+            <span class="translate">{{.translate}}</span>
+        </td>
+    </tr>
+    {{ end }}
+</table>
+
+
+<div class="modal" tabindex="-1" id="wordEdit">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="">
+                <input type="hidden" class="form-control" name="id" value="">
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Word</label>
+                        <input type="text" class="form-control form-control-sm" name="word" placeholder="">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Translate</label>
+                        <textarea class="form-control form-control-sm" rows="3" name="translate"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Comment</label>
+                        <textarea class="form-control form-control-sm" rows="3" name="comment"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Категория</label>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function(){
+        $('.btn-r').click(function() {
+            let tr = $(this).closest('tr');
+            let id = tr.data('id')
+            let rate = parseInt($(this).html());
+            if (rate > 0) {
+                tr.addClass('text-ok')
+            } else {
+                tr.addClass('text-danger')
+            }
+            $('.rate').html(rate)
+            queryGet('/word/log/'+id+'/'+rate, function(data) {
+                if (data !== '') {
+                    alert(data)
+                }
+            })
+        })
+        /*$('.table .word').on('mouseover', function() {
+            rateDown = setTimeout(function(x) {
+                $(x).closest('tr').find('.btn-primary').html(4);
+                let id = $(x).closest('tr').data('id')
+                $.get('?id='+id+'&action=remind&'+Date.now());
+            }, 200, this);
+            if (!this.reminded) {
+                this.reminded = 1;
+                setTimeout(function(x) {
+                    $(x).closest('tr').find('.btn').css('visibility', 'hidden');
+                }, 3000, this);
+            }
+        })*/
+        /*$('.table .word').on('mouseout', function() {
+            clearTimeout(rateDown);
+        })*/
+
+        $('.table .word').on('click', function() {
+            let tr = $(this).closest('tr');
+            let id = tr.data('id')
+            queryGet('/word/edit/'+id+'?date='+Date.now(), function(data) {
+                const myModal = new bootstrap.Modal(document.getElementById('wordEdit'), {});
+                myModal.show()
+                for (var key in data) {
+                    $('#wordEdit form [name="'+key+'"]').val(data[key])
+                }
+                //$('#wordEdit form .modal-body').html(data)
+                $('#wordEdit form').on('submit', function(e) {
+                    e.preventDefault()
+                    queryPost('/word/edit/'+id, $(this).serialize(), function(data) {
+                        myModal.hide()
+                    });
+                })
+            });
+        })
+
+        /*function calculate()
+        {
+            var now = Date.now()
+            var offset = ((now - counter) / 1000).toFixed(2)
+            return offset;
+        }
+        function reset()
+        {
+            var offset = calculate();
+            $('.counter span.last-time').html(offset)
+            counter = Date.now()
+            return offset;
+        }
+        counter = Date.now();
+        $('.counter a').click(reset)
+        setInterval(function() {
+            var offset = calculate();
+            $('.counter span.time').html(offset)
+        }, 1000);*/
+    });
+</script>
+
+{{end}}

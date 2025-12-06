@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/gobs/pretty"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"maps"
@@ -23,16 +24,6 @@ func Connect() *sqlx.DB {
 	//	panic(err)
 	//}
 	return db
-}
-
-func Fields(db *sqlx.DB, table string) []string {
-	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %v", table))
-	if err != nil {
-		panic(err)
-	}
-	columns, err := rows.Columns()
-	defer rows.Close()
-	return columns
 }
 
 func GetData(sql string, db *sqlx.DB) []map[string]interface{} {
@@ -88,22 +79,31 @@ func Exec(db *sqlx.DB, s string) sql.Result {
 	return result
 }
 
-func Insert(database *sqlx.DB, table string, values map[string]any) {
+func Insert(database *sqlx.DB, table string, values map[string]any) sql.Result {
 	fields := []string{}
 	places := []string{}
 	vals := []any{}
+	fieldsInfo := Fields(database, table)
 	i := 1
 	for field, value := range values {
 		fields = append(fields, field)
 		places = append(places, fmt.Sprintf(`$%v`, i))
+		fieldInfo := fieldsInfo[field]
+		if value == "" {
+			if fieldInfo.Type == "integer" {
+				value = 0
+			}
+		}
 		vals = append(vals, value)
 		i++
 	}
 	s := fmt.Sprintf(`INSERT INTO %v (%v) VALUES (%v)`, table, strings.Join(fields, ","), strings.Join(places, ", "))
-	database.MustExec(s, vals...)
+	fmt.Println(s)
+	pretty.PrettyPrint(vals)
+	return database.MustExec(s, vals...)
 }
 
-func Update(database *sqlx.DB, table string, pk int, values map[string]any) {
+func Update(database *sqlx.DB, table string, pk int, values map[string]any) sql.Result {
 	sets := []string{}
 	vals := []any{}
 	i := 1
@@ -113,5 +113,5 @@ func Update(database *sqlx.DB, table string, pk int, values map[string]any) {
 		i++
 	}
 	s := fmt.Sprintf(`UPDATE %v SET %v WHERE id=%v`, table, strings.Join(sets, ","), pk)
-	database.MustExec(s, vals...)
+	return database.MustExec(s, vals...)
 }

@@ -7,6 +7,8 @@ import (
 	"english/pkg/utils"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"strings"
+
 	//"github.com/gobs/pretty"
 	"html/template"
 	"net/http"
@@ -107,34 +109,23 @@ func exerciseArticles(context *gin.Context) {
 	database := db.Connect()
 	books := models.GetBooks(database)
 
-	selected, _ := context.Cookie("article-next-page")
-	if selected == "" {
-		selected = "1"
+	articlesMode := strings.Contains(context.FullPath(), "articles")
+	exercise := "articles"
+	if !articlesMode {
+		exercise = "predlogs"
 	}
-
-	counts := 0
+	articles, selected, counts := GetDataForArticles(context, articlesMode)
 
 	context.HTML(http.StatusOK, "exercise", gin.H{
 		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
-		"exerciseIndex":    "articles",
-		"exerciseInfo":     GetExerciseStarted(database, "articles"),
+		"exerciseIndex":    exercise,
+		"exerciseInfo":     GetExerciseStarted(database, exercise),
 		"date":             time.Now().Format("15:04:05"),
 		"hideAfterStart":   "false",
+		"articles":         template.HTML(articles),
 		"selected":         selected,
 		"counts":           counts,
-		"articlesMode":     true,
-	})
-}
-
-func exercisePrepositions(context *gin.Context) {
-	database := db.Connect()
-	books := models.GetBooks(database)
-
-	context.HTML(http.StatusOK, "exercise", gin.H{
-		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
-		"exerciseIndex":    "predlogs",
-		"exerciseInfo":     GetExerciseStarted(database, "predlogs"),
-		"date":             time.Now().Format("15:04:05"),
+		"articlesMode":     articlesMode,
 	})
 }
 
@@ -152,4 +143,153 @@ func updateAuto(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{
 		"status": "ok",
 	})
+}
+
+func memory(context *gin.Context) {
+	database := db.Connect()
+	books := models.GetBooks(database)
+
+	context.HTML(http.StatusOK, "memory", gin.H{
+		"getBooksSelector": template.HTML(models.BooksSelector(books, utils.GetPostDefaultInt("book", context))),
+		"data":             GetDataForMemory(database),
+	})
+}
+
+// '?id='+id+'&action=log&rate='+rate
+func wordLog(context *gin.Context) {
+	database := db.Connect()
+	db.Insert(database, "english_log", map[string]any{
+		"id_word":    context.Param("id"),
+		"date_added": time.Now().Format("2006-01-02 15:04:05"),
+		"result":     context.Param("rate"),
+	})
+	context.String(http.StatusOK, "")
+}
+
+// $.getJSON('?id='+id+'&action=edit&'+Date.now()
+func wordEdit(context *gin.Context) {
+	database := db.Connect()
+	words := models.GetWords(database, fmt.Sprintf(`id=%v`, context.Param("id")))
+	context.JSON(http.StatusOK, gin.H{
+		"id":        words[0].Id,
+		"word":      words[0].Word,
+		"translate": words[0].Translate,
+		"comment":   words[0].Comment.String,
+	})
+}
+
+// $.post('?id='+id+'&action=edit', $(this).serialize()
+func wordEditSave(context *gin.Context) {
+	database := db.Connect()
+	id, _ := strconv.Atoi(context.Param("id"))
+	db.Update(database, "english", id, map[string]any{
+		"word":      context.PostForm("word"),
+		"translate": context.PostForm("translate"),
+		"comment":   context.PostForm("comment"),
+	})
+	context.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
+// todo $.get('?action=save_word&id='+id+'&'+field+'='+russian
+func wordSave(context *gin.Context) {
+	//database := db.Connect()
+	context.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
+// todo $.get('?action=get_word&word='+this.value,
+func wordGet(context *gin.Context) {
+	//database := db.Connect()
+	context.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
+// todo $.get('?word='+word,
+func wordData(context *gin.Context) {
+	//database := db.Connect()
+	context.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
+func translateAdd(context *gin.Context) {
+	database := db.Connect()
+	base := text.BaseForm(context.PostForm("english"))
+	id := 1
+	idBook := utils.GetCookie("book", context)
+	if idBook != "" {
+		id, _ = strconv.Atoi(idBook)
+	}
+	data := map[string]any{
+		"english":            strings.TrimSpace(context.PostForm("english")),
+		"russian":            strings.TrimSpace(context.PostForm("russian")),
+		"book":               models.GetBookName(database, int64(id)),
+		"id_book":            id,
+		"list":               20,
+		"date_added":         time.Now().Format("2006-01-02 15:04:05"),
+		"english_short_auto": base,
+		"page":               utils.GetCookie("book", context),
+	}
+	res := db.Insert(database, "english_words", data)
+	idx, _ := res.LastInsertId()
+	rows, _ := res.RowsAffected()
+	context.JSON(http.StatusOK, gin.H{
+		"id":   idx,
+		"rows": rows,
+	})
+}
+
+func bookRead(context *gin.Context) {
+	database := db.Connect()
+	idBook := context.PostForm("id_book")
+	idBookInt, _ := strconv.Atoi(idBook)
+	utils.SetCookie("book", idBook, context, 24*365)
+
+	a := models.GetLastBookPage(database, idBookInt)
+	currentPage := 0
+	if a.DateFinished == a.DateAdded {
+		currentPage = a.Page
+	}
+
+	readPage := context.PostForm("readpage")
+	readPageInt, _ := strconv.Atoi(readPage)
+
+	fillPages := context.PostForm("fill-pages")
+	if fillPages != "" {
+		models.AutoPagination(idBookInt, readPageInt, database)
+		context.JSON(http.StatusOK, gin.H{
+			"ok": "fill-pages!",
+		})
+	}
+
+	finish := readPageInt
+	if currentPage != 0 && currentPage != readPageInt {
+		finish = currentPage
+	}
+
+	// Добавление промежуточных страниц для случаев "перескока" страницы через 2 и больше
+	addNewPage := addIntermediatePages()
+
+	if finish > 0 {
+		// todo
+	}
+
+	utils.SetCookie("page", readPage, context, 1)
+	if addNewPage {
+		models.AddBookPage(database, int64(idBookInt), readPageInt, time.Now(), time.Now())
+	}
+
+	context.JSON(http.StatusOK, gin.H{
+		"ok": 1,
+	})
+}
+
+func addIntermediatePages() bool {
+	addNewPage := true
+	// todo
+	return addNewPage
 }

@@ -17,12 +17,20 @@ import (
 )
 
 func TestGo() {
-	TestGetDataForArticles()
+	TestServer()
+}
+func TestFields() {
+	database := db.Connect()
+	data := db.Fields(database, "english")
+	pretty.PrettyPrint(data)
 }
 
-func TestGetDataForArticles() {
-	//database := db.Connect()
-	cmd.GetDataForArticles(true)
+func TestGetWords() {
+	database := db.Connect()
+	words := models.GetWordsWithDateResult(database)
+	pretty.PrettyPrint(words[0:2])
+	logs := models.GetLogs(database)
+	pretty.PrettyPrint(logs[0:2])
 }
 
 func TestUpdateExerciseIfStarted() {
@@ -133,20 +141,16 @@ func TestIsEqualTimes() {
 
 func TestServer() {
 
-	// gin.SetMode(gin.ReleaseMode)   debug off
 	r := gin.Default()
 
-	r.GET("/", func(c *gin.Context) {
+	r.GET("/", func(context *gin.Context) {
 		database := db.Connect()
 		defer database.Close()
 
-		dataEnglishBooks := cmd.GetDataEnglishBooks(10, c, database)
-		html := cmd.ReadingStat("Сегодня", dataEnglishBooks, time.Now())
-		pretty.PrettyPrint(dataEnglishBooks)
+		cmd.BookRead(context)
 
-		c.JSON(http.StatusOK, gin.H{
-			"ok":   true,
-			"html": html,
+		context.JSON(http.StatusOK, gin.H{
+			"ok": true,
 		})
 	})
 

@@ -88,9 +88,26 @@
 <script src="/static/bootstrap.min.js"></script>
 <script type="text/javascript">
 
+  function queryGet(url, callback) {
+    $.ajax({type:'GET', url: url})
+      .done(callback)
+      .error(onJsError);
+  }
+
+  function queryPost(url, data, callback) {
+    $.ajax({type:'POST', data: data, url: url})
+      .done(callback)
+      .error(onJsError);
+  }
+
+  function onJsError(data) {
+    console.log(data)
+    alert(data.statusText)
+  }
+
   $('#readbook').submit(function(e) {
     e.preventDefault()
-    $.post('', $(this).serialize(), function(data) {
+    $.post('/book/read', $(this).serialize(), function(data) {
       $('[name="english"]').focus()
       /*if (data != '') {
           alert(data)

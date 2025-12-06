@@ -5,10 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"regexp"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func IsNumeric(v string) bool {
@@ -69,6 +71,21 @@ func GetCookie(name string, c *gin.Context) string {
 	return cookie
 }
 
+func SetCookie(name string, value string, c *gin.Context, hours time.Duration) {
+	c.SetCookieData(&http.Cookie{
+		Name:  name,
+		Value: "test",
+		Path:  "/",
+		//Domain:     "localhost",
+		//MaxAge:     3600,
+		Secure:   false,
+		HttpOnly: false,
+		// Additional fields available in http.Cookie
+		Expires: time.Now().Add(hours * time.Hour),
+		// Partitioned: true, // Available in newer Go versions
+	})
+}
+
 func GetPostDefault(name string, context *gin.Context) string {
 	return context.DefaultQuery(name, context.DefaultPostForm(name, GetCookie(name, context)))
 }
@@ -80,6 +97,11 @@ func GetPostDefaultInt(name string, context *gin.Context) int {
 		return result
 	}
 	return 0
+}
+
+func StripTags(htmlContent string) string {
+	re := regexp.MustCompile(`<[^>]*>`)
+	return re.ReplaceAllString(htmlContent, "")
 }
 
 // MapKeySortByValues сортировка ключей словаря

@@ -16,7 +16,7 @@
   {
     var id = $(input).closest('tr').data('id');
     var russian = input.value;
-    $.get('?action=save_word&id='+id+'&'+field+'='+russian, function(data) {
+    $.get('/word/save/'+id+'?'+field+'='+russian, function(data) {
       $(input).replaceWith(data)
       $('[name="english"]').focus()
     });
@@ -34,7 +34,7 @@
     if (!this.value) {
       return ;
     }
-    $.get('?action=get_word&word='+this.value, function(data) {
+    $.get('/word/get?word='+this.value, function(data) {
       $('#get_word').html(data)
     });
   })
@@ -43,6 +43,7 @@
           return ;
       }
   })*/
+  // Инпут для редактирования перевода
   $('td').on('dblclick', function(e) {
     if (e.target.tagName != 'TD') {
       return ;
@@ -60,7 +61,7 @@
     }
     if ($(this).index() == 3) {
       let word = $(this).closest('tr').find('td:nth-child(2)').attr('title')
-      $.get('?word='+word, function(data) {
+      $.get('/word/data/?word='+word, function(data) {
         $('#info').html(data)
       });
     }
@@ -73,6 +74,23 @@
     if (e.keyCode == 13 && eng && !$('[name="russian"]').val()) {
       window.open('https://translate.google.as/?sl=en&tl=ru&text='+eng, 'context');
     }
+  })
+
+  $('#translateAdd').submit(function(e) {
+      e.preventDefault()
+      $.post('/translate/add', $(this).serialize(), function(data) {
+          console.log(data)
+          $('[name="english"]').focus()
+          /*if (data != '') {
+              alert(data)
+          } else {*/
+          $('#readbook .btn').addClass('btn-success')
+          setTimeout(function() {
+              $('#readbook .btn').removeClass('btn-success')
+          }, 1000);
+          $('#readinfo').html(data)
+          //}
+      });
   })
 </script>
 
