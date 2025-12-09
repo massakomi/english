@@ -17,7 +17,10 @@ import (
 )
 
 func TestGo() {
-	TestServer()
+	s := fmt.Sprintf(`d=%d f=%.1f`, 100, 1.2)
+	fmt.Println(s)
+	s = fmt.Sprintf(`v=%v #v=%#v b=%b d=%d s=%s t=%t f=%f`, "1", "1", "1", "1", "1", "1", "1")
+	fmt.Println(s)
 }
 func TestFields() {
 	database := db.Connect()
@@ -147,7 +150,7 @@ func TestServer() {
 		database := db.Connect()
 		defer database.Close()
 
-		cmd.BookRead(context)
+		//cmd.BookRead(context)
 
 		context.JSON(http.StatusOK, gin.H{
 			"ok": true,
