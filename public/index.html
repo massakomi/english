@@ -122,14 +122,14 @@
   })
   function loadNextBookPage()
   {
+    console.log('loadNextBookPage')
     let book = $('[name="id_book"]').val();
-    /* todo доделать $.get('?action=get_page&book='+book, function(data) {
-      $('#readinfo').html('prev page ' + data)
-      $('[name="readpage"]').val(1 + parseInt(data))
-    });*/
+    $.get('/book/page/'+book, function(data) {
+      $('#readinfo').html('prev page ' + data.page)
+      $('[name="readpage"]').val(1 + parseInt(data.page))
+    });
   }
-  $('[name="readbook"]').change(function() {
-    $('[name="book"]').val(this.value)
+  $('[name="id_book"]').change(function() {
     loadNextBookPage()
   })
 

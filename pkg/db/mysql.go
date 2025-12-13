@@ -53,15 +53,22 @@ func GetFirstVal(sql string, database *sqlx.DB) string {
 	if row[0][key] == nil {
 		return ""
 	}
-
+	keys := slices.Sorted(maps.Keys(row[0]))
+	if !slices.Contains(keys, "dt") {
+		log.Fatal("Запрос должен содержать поле с ключом dt")
+	}
 	var dt string
 	switch v := row[0]["dt"].(type) {
 	case int:
 		dt = strconv.FormatInt(int64(row[0]["dt"].(int)), 10)
+	case int64:
+		dt = strconv.FormatInt(row[0]["dt"].(int64), 10)
 	case string:
 		dt = row[0]["dt"].(string)
 	case time.Time:
 		dt = row[0]["dt"].(time.Time).Format("2006-01-02 15:04:05")
+	case nil:
+		dt = ""
 	default:
 		log.Panicf("I don't know about type %T!\n", v)
 	}

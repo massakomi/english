@@ -17,7 +17,7 @@
     var id = $(input).closest('tr').data('id');
     var russian = input.value;
     $.get('/word/save/'+id+'?'+field+'='+russian, function(data) {
-      $(input).replaceWith(data)
+      $(input).replaceWith(data[field])
       $('[name="english"]').focus()
     });
   }
@@ -61,7 +61,7 @@
     }
     if ($(this).index() == 3) {
       let word = $(this).closest('tr').find('td:nth-child(2)').attr('title')
-      $.get('/word/data/?word='+word, function(data) {
+      $.get('/word/table?word='+word, function(data) {
         $('#info').html(data)
       });
     }

@@ -8,6 +8,13 @@
         {{template "home_top.html" .}}
     {{ end }}
 
+    <style>
+        .table.small>:not(caption)>*>td {padding-right:10px;}
+        .table.small td:last-child {color:#ccc}
+        .table.small input {width: 100%; font-size: 12px;}
+        .top-form {position:absolute;}
+        .books-last {font-size:12px; position:absolute; right: 25px; top: 55px; color:#ccc}
+    </style>
     {{template "home_table.html" .}}
 
     {{ .readingStat }}

@@ -155,7 +155,6 @@ func memory(context *gin.Context) {
 	})
 }
 
-// '?id='+id+'&action=log&rate='+rate
 func wordLog(context *gin.Context) {
 	database := db.Connect()
 	db.Insert(database, "english_log", map[string]any{
@@ -166,7 +165,7 @@ func wordLog(context *gin.Context) {
 	context.String(http.StatusOK, "")
 }
 
-// $.getJSON('?id='+id+'&action=edit&'+Date.now()
+// Загружает на редактирование слово в /memory
 func wordEdit(context *gin.Context) {
 	database := db.Connect()
 	words := models.GetWords(database, fmt.Sprintf(`id=%v`, context.Param("id")))
@@ -178,7 +177,7 @@ func wordEdit(context *gin.Context) {
 	})
 }
 
-// $.post('?id='+id+'&action=edit', $(this).serialize()
+// Сохраняет слово в /memory
 func wordEditSave(context *gin.Context) {
 	database := db.Connect()
 	id, _ := strconv.Atoi(context.Param("id"))
@@ -192,27 +191,81 @@ func wordEditSave(context *gin.Context) {
 	})
 }
 
-// todo $.get('?action=save_word&id='+id+'&'+field+'='+russian
 func wordSave(context *gin.Context) {
-	//database := db.Connect()
+	data := make(map[string]any)
+	id, _ := strconv.Atoi(context.Param("id"))
+	if russian, _ := context.GetQuery("russian"); russian != "" {
+		data["russian"] = russian
+	}
+	if english, _ := context.GetQuery("english"); english != "" {
+		data["english"] = english
+	}
+	database := db.Connect()
+	db.Update(database, `english_words`, id, data)
 	context.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"id":      id,
+		"russian": data["russian"],
+		"english": data["english"],
 	})
 }
 
 // todo $.get('?action=get_word&word='+this.value,
 func wordGet(context *gin.Context) {
-	//database := db.Connect()
-	context.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+	database := db.Connect()
+	cookBook, _ := context.Cookie("book")
+	word := context.Query("word")
+	data := models.GetEnglishWords(database, fmt.Sprintf(`"english" like '%v' order by id desc limit 5`, word))
+	if len(data) == 0 {
+		data = models.GetEnglishWords(database, fmt.Sprintf(`"english" like '%v%%' order by id desc limit 5`, word))
+	} else if cookBook != "" {
+		var ids []string
+		for _, item := range data {
+			ids = append(ids, strconv.FormatInt(int64(item.Id), 10))
+		}
+		sql := fmt.Sprintf(`"english" like '%v%%' AND id_book='%v' AND id NOT IN (%v) order by id desc`, word, cookBook, strings.Join(ids, ","))
+		data2 := models.GetEnglishWords(database, sql)
+		if len(data2) > 0 {
+			data = append(data, data2...)
+		}
+	}
+	if len(data) == 0 {
+		word := text.BaseForm(context.PostForm("word"), false)
+		where := fmt.Sprintf(`"english" like '%v%%'`, word)
+		if strings.Contains(word, " ") {
+			where += fmt.Sprintf(` OR "english" like '%v%%'`, strings.Replace(word, " ", "-", -1))
+		}
+		if strings.Contains(word, "-") {
+			where += fmt.Sprintf(` OR "english" like '%v%%'`, strings.Replace(word, "-", " ", -1))
+		}
+		data = models.GetEnglishWords(database, where)
+	}
+	output := []string{}
+	for _, item := range data {
+		book := item.Book
+		if cookBook != "" && cookBook == strconv.FormatInt(int64(item.IdBook), 10) {
+			book = fmt.Sprintf(`<b>%v</b>`, book)
+		}
+		itemPage, _ := item.Page.Value()
+		output = append(output, fmt.Sprintf(`%v (%v - %v)`, item.Russian, book, itemPage))
+	}
+	context.String(http.StatusOK, strings.Join(output, " / "))
+}
+
+func wordTable(context *gin.Context) {
+	database := db.Connect()
+	data := getDataForHome(context, database)
+	context.HTML(http.StatusOK, "home_table", gin.H{
+		"data": data,
 	})
 }
 
-// todo $.get('?word='+word,
-func wordData(context *gin.Context) {
-	//database := db.Connect()
+func bookPageGet(context *gin.Context) {
+	bookId := context.Param("id")
+	database := db.Connect()
+	sql := fmt.Sprintf(`select MAX(page) as dt from english_bookread where id_book=%v`, bookId)
+	c := db.GetFirstVal(sql, database)
 	context.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"page": c,
 	})
 }
 

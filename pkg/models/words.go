@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"strings"
 	"time"
 )
 
@@ -20,7 +21,10 @@ type Word struct {
 }
 
 func GetWords(database *sqlx.DB, where string) []Word {
-	s := fmt.Sprintf(`select * from english where %v order by id`, where)
+	if !strings.Contains(where, "order by") {
+		where += ` order by id`
+	}
+	s := fmt.Sprintf(`select * from english where %v`, where)
 	data := GetWordsBySql(database, s, func(rows *sql.Rows, p *Word) error {
 		return rows.Scan(&p.Id, &p.Word, &p.Translate, &p.Comment, &p.DateAdded, &p.DateUpdated, &p.DateRemind, &p.IdCategory)
 	})

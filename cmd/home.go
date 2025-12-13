@@ -13,7 +13,6 @@ import (
 	"maps"
 	"math"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -56,7 +55,7 @@ func prepareDataForTable(data assoc, context *gin.Context, database *sqlx.DB) as
 
 		format := "15:04"
 		if context.Query("word") != "" {
-			item["page"] = strconv.FormatInt(item["page"].(int64), 10) + " " + item["book"].(string)
+			item["page"] = fmt.Sprintf(`%v %v`, item["page"], item["book"])
 			format = "Jan 02 15:04"
 		}
 		t := item["date_added"].(time.Time)
